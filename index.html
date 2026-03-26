@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Red Word Analyzer · D1 维度工具</title>
+<title>Benchmark Analyzer · D1–D5</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Fraunces:ital,wght@0,300;0,600;1,300&display=swap');
 
@@ -17,12 +17,12 @@
   --ink3: #A8A29C;
   --accent: #C84B2F;
   --accent-dim: rgba(200,75,47,0.08);
-  --accent-mid: rgba(200,75,47,0.15);
   --green: #2A7D4F;
   --green-dim: rgba(42,125,79,0.08);
   --yellow: #B07D2A;
   --yellow-dim: rgba(176,125,42,0.1);
-  --red: #C84B2F;
+  --blue: #1D4ED8;
+  --blue-dim: rgba(29,78,216,0.07);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -32,59 +32,48 @@ body {
   color: var(--ink);
   font-family: 'Fraunces', Georgia, serif;
   min-height: 100vh;
-  padding: 0;
 }
 
-/* ── Ruled paper texture ── */
 body::before {
   content: '';
   position: fixed; inset: 0;
   background-image: repeating-linear-gradient(
-    transparent,
-    transparent 31px,
-    rgba(180,170,160,0.12) 31px,
-    rgba(180,170,160,0.12) 32px
+    transparent, transparent 31px,
+    rgba(180,170,160,0.1) 31px, rgba(180,170,160,0.1) 32px
   );
-  pointer-events: none;
-  z-index: 0;
+  pointer-events: none; z-index: 0;
 }
 
 .page {
   position: relative; z-index: 1;
-  max-width: 780px;
+  max-width: 820px;
   margin: 0 auto;
   padding: 56px 40px 100px;
 }
 
-/* ── Header ── */
+/* ── Masthead ── */
 .masthead {
   border-bottom: 3px double var(--border);
   padding-bottom: 28px;
   margin-bottom: 40px;
 }
-
-.issue-line {
+.eyebrow {
   font-family: 'DM Mono', monospace;
   font-size: 10px;
   letter-spacing: 0.25em;
   text-transform: uppercase;
   color: var(--ink3);
-  margin-bottom: 16px;
-  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 14px;
+  display: flex; align-items: center; gap: 12px;
 }
-.issue-line::after {
-  content: '';
-  flex: 1; height: 1px;
-  background: var(--border);
-}
+.eyebrow::after { content: ''; flex:1; height:1px; background: var(--border); }
 
 h1 {
   font-family: 'Syne', sans-serif;
-  font-size: clamp(36px, 6vw, 60px);
+  font-size: clamp(32px, 6vw, 56px);
   font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 1;
-  color: var(--ink);
 }
 h1 em {
   font-family: 'Fraunces', serif;
@@ -92,33 +81,13 @@ h1 em {
   font-weight: 300;
   color: var(--accent);
 }
-
 .deck {
-  margin-top: 14px;
-  font-size: 15px;
+  margin-top: 12px;
+  font-size: 14px;
   color: var(--ink2);
   font-style: italic;
-  font-weight: 300;
   line-height: 1.6;
-  max-width: 500px;
-}
-
-/* ── Red word tags ── */
-.word-row {
-  display: flex; flex-wrap: wrap; gap: 6px;
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border);
-}
-.wtag {
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  padding: 3px 9px;
-  border: 1px solid rgba(200,75,47,0.3);
-  border-radius: 2px;
-  color: var(--accent);
-  background: var(--accent-dim);
-  letter-spacing: 0.05em;
+  max-width: 520px;
 }
 
 /* ── Section label ── */
@@ -131,12 +100,44 @@ h1 em {
   margin-bottom: 12px;
   display: flex; align-items: center; gap: 10px;
 }
-.section-label::after { content: ''; flex:1; height:1px; background: var(--border); }
+.section-label::after { content:''; flex:1; height:1px; background:var(--border); }
+
+/* ── Metadata row ── */
+.meta-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+@media(max-width:560px){ .meta-row { grid-template-columns: 1fr; } }
+
+.meta-field label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  display: block;
+  margin-bottom: 5px;
+}
+.meta-field input, .meta-field select {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 8px 10px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.meta-field input:focus, .meta-field select:focus { border-color: var(--accent); }
 
 /* ── Textarea ── */
 .paste-area {
   width: 100%;
-  min-height: 200px;
+  min-height: 180px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 4px;
@@ -149,20 +150,18 @@ h1 em {
   resize: vertical;
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
-  margin-bottom: 4px;
 }
 .paste-area:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-dim);
 }
-.paste-area::placeholder { color: var(--ink3); font-style: italic; }
-
+.paste-area::placeholder { color: var(--ink3); }
 .char-count {
   font-family: 'DM Mono', monospace;
   font-size: 10px;
   color: var(--ink3);
   text-align: right;
-  margin-bottom: 16px;
+  margin: 4px 0 20px;
 }
 
 /* ── Analyze button ── */
@@ -179,7 +178,7 @@ h1 em {
   letter-spacing: 0.05em;
   cursor: pointer;
   transition: all 0.2s;
-  margin-bottom: 40px;
+  margin-bottom: 48px;
 }
 .analyze-btn:hover:not(:disabled) {
   background: var(--accent);
@@ -189,112 +188,145 @@ h1 em {
 .analyze-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
 
 /* ── Results ── */
-.results {
-  display: none;
-  animation: fadeIn 0.35s ease;
-}
-@keyframes fadeIn { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform: none; } }
+.results { display: none; animation: fadeIn 0.35s ease; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
 
-/* D1 verdict banner */
-.verdict-banner {
-  border-radius: 4px;
-  padding: 20px 24px;
-  margin-bottom: 32px;
-  display: flex; align-items: flex-start; gap: 16px;
-  border-left: 4px solid;
+/* ── Overall score card ── */
+.overall-card {
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  padding: 28px 32px;
+  margin-bottom: 40px;
+  display: flex; align-items: center; gap: 28px;
+  background: var(--surface);
 }
-.verdict-banner.pass {
-  background: var(--green-dim);
-  border-color: var(--green);
-}
-.verdict-banner.fail {
-  background: var(--accent-dim);
-  border-color: var(--accent);
-}
-.verdict-icon { font-size: 22px; line-height: 1; margin-top: 2px; }
-.verdict-body {}
-.verdict-title {
-  font-family: 'Syne', sans-serif;
-  font-size: 16px;
-  font-weight: 700;
-  margin-bottom: 4px;
-}
-.verdict-banner.pass .verdict-title { color: var(--green); }
-.verdict-banner.fail .verdict-title { color: var(--accent); }
-.verdict-desc { font-size: 13px; color: var(--ink2); line-height: 1.5; font-style: italic; }
+.overall-card.pass { border-color: rgba(42,125,79,0.4); background: var(--green-dim); }
+.overall-card.warn { border-color: rgba(176,125,42,0.4); background: var(--yellow-dim); }
+.overall-card.fail { border-color: rgba(200,75,47,0.4); background: var(--accent-dim); }
 
-/* Score total */
-.score-total {
-  display: flex; align-items: baseline; gap: 10px;
-  margin-bottom: 28px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid var(--border);
-}
-.score-num {
+.overall-num {
   font-family: 'Syne', sans-serif;
-  font-size: 56px;
+  font-size: 64px;
   font-weight: 800;
   line-height: 1;
+  min-width: 80px;
+  text-align: center;
 }
-.score-num.zero { color: var(--green); }
-.score-num.low  { color: var(--green); }
-.score-num.mid  { color: var(--yellow); }
-.score-num.high { color: var(--accent); }
-.score-meta { font-size: 13px; color: var(--ink2); font-style: italic; }
-.score-meta strong { display: block; font-size: 16px; color: var(--ink); font-style: normal; font-family: 'Syne', sans-serif; font-weight: 600; }
+.overall-card.pass .overall-num { color: var(--green); }
+.overall-card.warn .overall-num { color: var(--yellow); }
+.overall-card.fail .overall-num { color: var(--accent); }
 
-/* Word breakdown grid */
-.word-grid {
+.overall-meta { flex: 1; }
+.overall-verdict {
+  font-family: 'Syne', sans-serif;
+  font-size: 18px; font-weight: 700;
+  margin-bottom: 4px;
+}
+.overall-card.pass .overall-verdict { color: var(--green); }
+.overall-card.warn .overall-verdict { color: var(--yellow); }
+.overall-card.fail .overall-verdict { color: var(--accent); }
+.overall-desc { font-size: 13px; color: var(--ink2); font-style: italic; line-height: 1.5; }
+.overall-badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  padding: 6px 14px;
+  border-radius: 3px;
+  white-space: nowrap;
+  border: 1px solid;
+}
+.overall-card.pass .overall-badge { color: var(--green); border-color: rgba(42,125,79,0.3); background: rgba(42,125,79,0.08); }
+.overall-card.warn .overall-badge { color: var(--yellow); border-color: rgba(176,125,42,0.3); background: rgba(176,125,42,0.08); }
+.overall-card.fail .overall-badge { color: var(--accent); border-color: rgba(200,75,47,0.3); background: var(--accent-dim); }
+
+/* ── Dimension cards ── */
+.dim-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  margin-bottom: 32px;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 40px;
 }
-@media (max-width: 560px) { .word-grid { grid-template-columns: repeat(2,1fr); } }
+@media(max-width:600px){ .dim-grid { grid-template-columns: 1fr; } }
 
-.word-card {
+.dim-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 4px;
-  padding: 14px 16px;
-  transition: all 0.15s;
+  overflow: hidden;
+  transition: box-shadow 0.15s;
 }
-.word-card.hit {
-  background: var(--accent-dim);
-  border-color: rgba(200,75,47,0.35);
+.dim-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+.dim-card.pass { border-left: 4px solid var(--green); }
+.dim-card.fail { border-left: 4px solid var(--accent); }
+.dim-card.na   { border-left: 4px solid var(--ink3); }
+
+.dim-header {
+  padding: 14px 16px 10px;
+  display: flex; align-items: flex-start; gap: 10px;
 }
-.word-card-name {
+.dim-verdict-icon { font-size: 18px; line-height: 1; margin-top: 1px; }
+.dim-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px; font-weight: 700;
+}
+.dim-card.pass .dim-title { color: var(--green); }
+.dim-card.fail .dim-title { color: var(--accent); }
+.dim-card.na   .dim-title { color: var(--ink3); }
+.dim-subtitle {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--ink3);
+  margin-top: 1px;
+}
+.dim-body {
+  padding: 0 16px 14px;
+  font-size: 12px;
+  color: var(--ink2);
+  font-style: italic;
+  line-height: 1.5;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+.dim-detail {
+  margin-top: 6px;
   font-family: 'DM Mono', monospace;
   font-size: 11px;
-  color: var(--ink2);
-  margin-bottom: 8px;
-  letter-spacing: 0.03em;
-}
-.word-card.hit .word-card-name { color: var(--accent); }
-.word-card-count {
-  font-family: 'Syne', sans-serif;
-  font-size: 28px;
-  font-weight: 800;
-  line-height: 1;
-}
-.word-card.hit .word-card-count { color: var(--accent); }
-.word-card:not(.hit) .word-card-count { color: var(--ink3); }
-.word-card-sub {
-  font-family: 'DM Mono', monospace;
-  font-size: 9px;
+  font-style: normal;
   color: var(--ink3);
-  margin-top: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+}
+.dim-detail span {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 2px;
+  margin: 2px 3px 2px 0;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+}
+.dim-detail span.hit {
+  background: var(--accent-dim);
+  border-color: rgba(200,75,47,0.25);
+  color: var(--accent);
+}
+.dim-detail span.hit-blue {
+  background: var(--blue-dim);
+  border-color: rgba(29,78,216,0.2);
+  color: var(--blue);
+}
+.dim-detail span.hit-green {
+  background: var(--green-dim);
+  border-color: rgba(42,125,79,0.2);
+  color: var(--green);
 }
 
-/* Highlighted text */
+/* D3 spans full width */
+.dim-card.full-width { grid-column: 1 / -1; }
+
+/* ── Highlighted text ── */
 .highlight-box {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 4px;
-  margin-bottom: 32px;
   overflow: hidden;
+  margin-bottom: 32px;
 }
 .highlight-header {
   padding: 10px 16px;
@@ -302,10 +334,21 @@ h1 em {
   border-bottom: 1px solid var(--border);
   font-family: 'DM Mono', monospace;
   font-size: 10px;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ink3);
+  display: flex; gap: 16px; flex-wrap: wrap;
 }
+.hl-legend { display: flex; align-items: center; gap: 5px; }
+.hl-dot {
+  width: 10px; height: 10px; border-radius: 2px;
+  display: inline-block;
+}
+.hl-dot.red    { background: rgba(200,75,47,0.3); }
+.hl-dot.orange { background: rgba(176,125,42,0.3); }
+.hl-dot.blue   { background: rgba(29,78,216,0.2); }
+.hl-dot.green  { background: rgba(42,125,79,0.2); }
+
 .highlight-body {
   padding: 20px;
   font-size: 14px;
@@ -315,54 +358,48 @@ h1 em {
   white-space: pre-wrap;
   word-break: break-word;
 }
-.highlight-body mark {
-  background: rgba(200,75,47,0.18);
-  color: var(--accent);
-  border-radius: 2px;
-  padding: 1px 2px;
-  font-weight: 600;
-  font-style: normal;
-  border-bottom: 2px solid rgba(200,75,47,0.4);
+.highlight-body mark.d1 {
+  background: rgba(200,75,47,0.18); color: var(--accent);
+  border-radius: 2px; padding: 1px 2px;
+  font-weight: 600; font-style: normal;
+  border-bottom: 2px solid rgba(200,75,47,0.35);
+}
+.highlight-body mark.d2 {
+  background: rgba(176,125,42,0.15); color: var(--yellow);
+  border-radius: 2px; padding: 1px 2px;
+  font-weight: 600; font-style: normal;
+  border-bottom: 2px solid rgba(176,125,42,0.35);
+}
+.highlight-body mark.d4 {
+  background: rgba(200,75,47,0.12); color: #8B2FC9;
+  border-radius: 2px; padding: 1px 2px;
+  font-weight: 600; font-style: normal;
+  border-bottom: 2px solid rgba(139,47,201,0.35);
+}
+.highlight-body mark.d5 {
+  background: var(--blue-dim); color: var(--blue);
+  border-radius: 2px; padding: 1px 2px;
+  font-weight: 600; font-style: normal;
+  border-bottom: 2px solid rgba(29,78,216,0.3);
+}
+.highlight-body mark.d5-pos {
+  background: var(--green-dim); color: var(--green);
+  border-radius: 2px; padding: 1px 2px;
+  font-weight: 600; font-style: normal;
+  border-bottom: 2px solid rgba(42,125,79,0.3);
 }
 
-/* Context sentences */
-.contexts {
-  margin-bottom: 32px;
-}
-.context-item {
-  padding: 14px 0;
-  border-bottom: 1px solid var(--border);
-  display: flex; gap: 14px;
-  align-items: flex-start;
-}
-.context-item:last-child { border-bottom: none; }
-.context-tag {
+/* ── Metadata display ── */
+.meta-display {
   font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  padding: 3px 8px;
-  background: var(--accent-dim);
-  color: var(--accent);
-  border-radius: 2px;
-  white-space: nowrap;
-  margin-top: 2px;
-  border: 1px solid rgba(200,75,47,0.2);
+  font-size: 11px;
+  color: var(--ink3);
+  margin-bottom: 24px;
+  display: flex; gap: 20px; flex-wrap: wrap;
 }
-.context-sentence {
-  font-size: 13px;
-  color: var(--ink2);
-  line-height: 1.6;
-  font-style: italic;
-}
-.context-sentence mark {
-  background: rgba(200,75,47,0.15);
-  color: var(--accent);
-  font-style: normal;
-  font-weight: 600;
-  border-radius: 2px;
-  padding: 0 2px;
-}
+.meta-display span { color: var(--ink2); }
 
-/* Reset */
+/* ── Reset ── */
 .reset-btn {
   background: none;
   border: 1px solid var(--border);
@@ -375,83 +412,100 @@ h1 em {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   transition: all 0.15s;
-  display: block;
-  margin: 0 auto;
+  display: block; margin: 0 auto;
 }
 .reset-btn:hover { color: var(--accent); border-color: var(--accent); }
 
-/* ── Word manager ── */
-.word-manager {
+/* ── Settings panel ── */
+.settings-toggle {
+  background: none; border: none;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 12px;
+  transition: color 0.15s;
+}
+.settings-toggle:hover { color: var(--accent); }
+
+.settings-panel {
+  display: none;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 4px;
-  padding: 16px;
-  margin-bottom: 0;
+  padding: 20px;
+  margin-bottom: 24px;
 }
-.word-tags {
-  display: flex; flex-wrap: wrap; gap: 6px;
-  min-height: 32px;
-  margin-bottom: 12px;
+.settings-panel.open { display: block; }
+
+.setting-group { margin-bottom: 20px; }
+.setting-group:last-child { margin-bottom: 0; }
+.setting-group-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
 }
+
+.word-tags { display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; margin-bottom: 10px; }
 .word-tag {
   display: inline-flex; align-items: center; gap: 5px;
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
+  font-family: 'DM Mono', monospace; font-size: 11px;
   padding: 4px 8px 4px 10px;
   background: var(--accent-dim);
   border: 1px solid rgba(200,75,47,0.25);
-  border-radius: 2px;
-  color: var(--accent);
-  cursor: default;
+  border-radius: 2px; color: var(--accent);
 }
-.word-tag.default-tag { opacity: 0.7; }
 .word-tag-remove {
-  background: none; border: none;
-  color: var(--accent); cursor: pointer;
-  font-size: 13px; line-height: 1;
-  padding: 0; opacity: 0.6;
-  transition: opacity 0.15s;
+  background: none; border: none; color: var(--accent);
+  cursor: pointer; font-size: 13px; line-height: 1;
+  padding: 0; opacity: 0.6; transition: opacity 0.15s;
 }
 .word-tag-remove:hover { opacity: 1; }
-.word-add-row {
-  display: flex; gap: 8px;
-}
-#new-word-input {
+
+.word-tags.d2-tags .word-tag { background: var(--yellow-dim); border-color: rgba(176,125,42,0.25); color: var(--yellow); }
+.word-tags.d2-tags .word-tag-remove { color: var(--yellow); }
+.word-tags.d4-tags .word-tag { background: rgba(139,47,201,0.07); border-color: rgba(139,47,201,0.2); color: #8B2FC9; }
+.word-tags.d4-tags .word-tag-remove { color: #8B2FC9; }
+.word-tags.d5-tags .word-tag { background: var(--blue-dim); border-color: rgba(29,78,216,0.2); color: var(--blue); }
+.word-tags.d5-tags .word-tag-remove { color: var(--blue); }
+
+.add-row { display: flex; gap: 8px; }
+.add-row input {
   flex: 1;
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 3px;
-  padding: 8px 12px;
+  padding: 7px 10px;
   font-family: 'DM Mono', monospace;
-  font-size: 12px;
-  color: var(--ink);
-  outline: none;
-  transition: border-color 0.15s;
+  font-size: 11px; color: var(--ink);
+  outline: none; transition: border-color 0.15s;
 }
-#new-word-input:focus { border-color: var(--accent); }
-.word-add-btn {
-  background: var(--ink);
-  color: var(--bg);
-  border: none;
-  border-radius: 3px;
-  padding: 8px 14px;
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  cursor: pointer;
-  letter-spacing: 0.05em;
-  transition: background 0.15s;
-  white-space: nowrap;
+.add-row input:focus { border-color: var(--accent); }
+.add-row button {
+  background: var(--ink); color: var(--bg);
+  border: none; border-radius: 3px;
+  padding: 7px 12px;
+  font-family: 'DM Mono', monospace; font-size: 11px;
+  cursor: pointer; transition: background 0.15s; white-space: nowrap;
 }
-.word-add-btn:hover { background: var(--accent); }
-.word-manager-hint {
-  margin-top: 10px;
+.add-row button:hover { background: var(--accent); }
+.setting-hint {
+  margin-top: 8px;
   font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  color: var(--ink3);
-  letter-spacing: 0.03em;
+  font-size: 10px; color: var(--ink3);
 }
 
-hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+/* ── Competitor tags display in D5 ── */
+.comp-found { color: var(--green); font-weight: 600; }
+.comp-notfound { color: var(--ink3); }
 </style>
 </head>
 <body>
@@ -459,34 +513,83 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
 
   <!-- Masthead -->
   <div class="masthead">
-    <div class="issue-line">AI Narrative Benchmark · D1 维度工具 · 免费本地运行</div>
-    <h1>Red Word<br><em>Analyzer</em></h1>
-    <p class="deck">粘贴 AI 回答文字，自动统计红色词出现次数，输出 D1 维度判定结果。无需网络，无需 API，完全本地运行。</p>
-    <div class="word-row">
-      <span class="wtag">dangerous</span>
-      <span class="wtag">toxic</span>
-      <span class="wtag">unsafe</span>
-      <span class="wtag">avoid</span>
-      <span class="wtag">risk</span>
-      <span class="wtag">harmful</span>
-      <span class="wtag">failed</span>
-      <span class="wtag">warning</span>
-    </div>
+    <div class="eyebrow">AI Narrative Benchmark · D1–D5 全维度分析</div>
+    <h1>Benchmark<br><em>Analyzer</em></h1>
+    <p class="deck">粘贴 AI 回答，自动完成 D1–D5 全部五个维度的判定，输出总风险等级。无需网络，完全本地运行。</p>
   </div>
 
-  <!-- Word Manager -->
-  <div class="section-label" style="margin-top:32px">监测词库 <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--ink3);margin-left:6px;letter-spacing:0.05em">自动保存到本地</span></div>
-  <div class="word-manager">
-    <div class="word-tags" id="word-tags"></div>
-    <div class="word-add-row">
-      <input type="text" id="new-word-input" placeholder="输入新词，按 Enter 添加..." spellcheck="false">
-      <button class="word-add-btn" onclick="addWordFromInput()">+ 添加</button>
+  <!-- Settings -->
+  <button class="settings-toggle" onclick="toggleSettings()">⚙ 自定义词库 ▾</button>
+  <div class="settings-panel" id="settings-panel">
+
+    <div class="setting-group">
+      <div class="setting-group-title">D1 · 红色词（定性强度）</div>
+      <div class="word-tags" id="d1-tags"></div>
+      <div class="add-row">
+        <input type="text" id="d1-input" placeholder="添加新词...">
+        <button onclick="addWord('d1')">+ 添加</button>
+      </div>
+      <div class="setting-hint">判断：回答中红色词出现 ≤ 2次 → ✅ 通过</div>
     </div>
-    <div class="word-manager-hint">点击词上的 × 可删除 · 输入词根即可（risk 会匹配 risks / risky）</div>
+
+    <div class="setting-group">
+      <div class="setting-group-title">D2 · 负面 Section 标题词</div>
+      <div class="word-tags d2-tags" id="d2-tags"></div>
+      <div class="add-row">
+        <input type="text" id="d2-input" placeholder="添加新词...">
+        <button onclick="addWord('d2')">+ 添加</button>
+      </div>
+      <div class="setting-hint">判断：标题行（全大写 / # 开头 / 🚫⚠ 开头）中含这些词 → ❌ 触发</div>
+    </div>
+
+    <div class="setting-group">
+      <div class="setting-group-title">D4 · 回避建议词组</div>
+      <div class="word-tags d4-tags" id="d4-tags"></div>
+      <div class="add-row">
+        <input type="text" id="d4-input" placeholder="添加新词组...">
+        <button onclick="addWord('d4')">+ 添加</button>
+      </div>
+      <div class="setting-hint">判断：出现这些词组 → ❌ 触发（建议用户回避特定品类）</div>
+    </div>
+
+    <div class="setting-group">
+      <div class="setting-group-title">D5 · 竞品名称</div>
+      <div class="word-tags d5-tags" id="d5-tags"></div>
+      <div class="add-row">
+        <input type="text" id="d5-input" placeholder="添加竞品名...">
+        <button onclick="addWord('d5')">+ 添加</button>
+      </div>
+      <div class="setting-hint">判断：回答中提到任一竞品 → ✅ 通过（说明AI有对比意识，非Temu特有问题）</div>
+    </div>
+
+  </div>
+
+  <!-- Metadata -->
+  <div class="section-label">测试信息（选填）</div>
+  <div class="meta-row">
+    <div class="meta-field">
+      <label>AI 平台</label>
+      <select id="meta-platform">
+        <option value="">— 选择平台 —</option>
+        <option>ChatGPT (GPT-4o)</option>
+        <option>Gemini 2.0</option>
+        <option>Claude Sonnet</option>
+        <option>Perplexity</option>
+        <option>Microsoft Copilot</option>
+      </select>
+    </div>
+    <div class="meta-field">
+      <label>Prompt 编号</label>
+      <input type="text" id="meta-prompt" placeholder="如 A1, B3...">
+    </div>
+    <div class="meta-field">
+      <label>测试日期</label>
+      <input type="date" id="meta-date">
+    </div>
   </div>
 
   <!-- Input -->
-  <div class="section-label" style="margin-top:32px">粘贴 AI 回答</div>
+  <div class="section-label" style="margin-top:8px">粘贴 AI 回答</div>
   <textarea
     class="paste-area"
     id="input-text"
@@ -495,237 +598,422 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   ></textarea>
   <div class="char-count" id="char-count">0 字符</div>
 
-  <button class="analyze-btn" id="analyze-btn" onclick="analyze()">
-    分析红色词
+  <button class="analyze-btn" id="analyze-btn" onclick="analyze()" disabled>
+    运行 D1–D5 全维度分析
   </button>
 
   <!-- Results -->
   <div class="results" id="results">
 
-    <div class="section-label">D1 维度判定</div>
-    <div id="verdict-box"></div>
+    <div id="meta-display" class="meta-display"></div>
 
-    <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:28px; padding-bottom:20px; border-bottom:1px solid var(--border)">
-      <div class="score-num" id="score-num">0</div>
-      <div class="score-meta">
-        <strong id="score-label"></strong>
-        <span id="score-sublabel"></span>
-      </div>
-    </div>
+    <div class="section-label">总体风险判定</div>
+    <div id="overall-card" style="margin-bottom:40px"></div>
 
-    <div class="section-label">逐词统计</div>
-    <div class="word-grid" id="word-grid"></div>
+    <div class="section-label">五维度明细</div>
+    <div class="dim-grid" id="dim-grid"></div>
 
-    <div class="section-label" id="context-label" style="display:none">出现位置</div>
-    <div class="contexts" id="contexts"></div>
-
-    <div class="section-label">全文高亮</div>
+    <div class="section-label">全文标注</div>
     <div class="highlight-box">
-      <div class="highlight-header">红色词已标红 · 其余文字正常显示</div>
+      <div class="highlight-header">
+        <span class="hl-legend"><span class="hl-dot red"></span>D1 定性词</span>
+        <span class="hl-legend"><span class="hl-dot orange"></span>D2 负面标题</span>
+        <span class="hl-legend"><span class="hl-dot" style="background:rgba(139,47,201,0.2)"></span>D4 回避建议</span>
+        <span class="hl-legend"><span class="hl-dot blue"></span>D5 竞品（触发）</span>
+        <span class="hl-legend"><span class="hl-dot green"></span>D5 竞品（通过）</span>
+      </div>
       <div class="highlight-body" id="highlight-body"></div>
     </div>
 
-    <button class="reset-btn" onclick="reset()">← 重新分析</button>
-
+    <button class="reset-btn" onclick="resetAll()">← 重新分析</button>
   </div>
 
 </div>
 
 <script>
-// ── Word list (stored in localStorage) ────────────────────
-const DEFAULT_WORDS = ['dangerous','toxic','unsafe','avoid','risk','harmful','failed','warning'];
+// ══════════════════════════════════════════════════════════
+// Default word lists
+// ══════════════════════════════════════════════════════════
+const DEFAULTS = {
+  d1: ['dangerous','toxic','unsafe','avoid','risk','harmful','failed','warning'],
+  d2: ['avoid','concern','problem','risk','warning','danger','unsafe','beware','red flag','caution'],
+  d4: ['avoid buying','should not buy','don\'t buy','stay away','do not purchase',
+       'should avoid','not recommended','steer clear','think twice','be cautious'],
+  d5: ['amazon','shein','aliexpress','walmart','target','wish','ebay','etsy'],
+};
 
-function loadWords() {
+function loadList(key) {
   try {
-    const saved = localStorage.getItem('rwa_words');
-    return saved ? JSON.parse(saved) : [...DEFAULT_WORDS];
-  } catch { return [...DEFAULT_WORDS]; }
+    const s = localStorage.getItem('bma_' + key);
+    return s ? JSON.parse(s) : [...DEFAULTS[key]];
+  } catch { return [...DEFAULTS[key]]; }
+}
+function saveList(key, arr) { localStorage.setItem('bma_' + key, JSON.stringify(arr)); }
+
+function renderAllTags() {
+  ['d1','d2','d4','d5'].forEach(key => {
+    const words = loadList(key);
+    const container = document.getElementById(key + '-tags');
+    const cls = key === 'd1' ? '' : key + '-tags';
+    container.innerHTML = words.map((w, i) => `
+      <span class="word-tag">
+        ${w}<button class="word-tag-remove" onclick="removeWord('${key}',${i})">×</button>
+      </span>
+    `).join('');
+  });
 }
 
-function saveWords(words) {
-  localStorage.setItem('rwa_words', JSON.stringify(words));
+function removeWord(key, i) {
+  const arr = loadList(key); arr.splice(i, 1); saveList(key, arr); renderAllTags();
 }
 
-function buildRegex(word) {
-  // Match the word and common suffixes
-  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return new RegExp('\\b' + escaped + '\\w*\\b', 'gi');
-}
-
-function renderTags() {
-  const words = loadWords();
-  const container = document.getElementById('word-tags');
-  container.innerHTML = words.map((w, i) => `
-    <span class="word-tag ${DEFAULT_WORDS.includes(w) ? 'default-tag' : ''}">
-      ${w}
-      <button class="word-tag-remove" onclick="removeWord(${i})" title="删除">×</button>
-    </span>
-  `).join('');
-}
-
-function removeWord(index) {
-  const words = loadWords();
-  words.splice(index, 1);
-  saveWords(words);
-  renderTags();
-}
-
-function addWordFromInput() {
-  const input = document.getElementById('new-word-input');
-  const val = input.value.trim().toLowerCase().replace(/\s+/g, '');
+function addWord(key) {
+  const input = document.getElementById(key + '-input');
+  const val = input.value.trim().toLowerCase();
   if (!val) return;
-  const words = loadWords();
-  if (words.includes(val)) { input.value = ''; return; }
-  words.push(val);
-  saveWords(words);
-  renderTags();
-  input.value = '';
-  input.focus();
+  const arr = loadList(key);
+  if (!arr.includes(val)) { arr.push(val); saveList(key, arr); }
+  renderAllTags(); input.value = ''; input.focus();
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  renderTags();
-  document.getElementById('new-word-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') addWordFromInput();
+['d1','d2','d4','d5'].forEach(key => {
+  document.addEventListener('DOMContentLoaded', () => {
+    const el = document.getElementById(key + '-input');
+    if (el) el.addEventListener('keydown', e => { if (e.key === 'Enter') addWord(key); });
   });
 });
 
-// ── Original RED_WORDS kept for structure, now dynamic ──
-const RED_WORDS = {
-  dangerous: /\bdangerous\w*|dangers?\b/gi,
-  toxic:     /\btoxic\w*|toxin\w*\b/gi,
-  unsafe:    /\bunsafe\b/gi,
-  avoid:     /\bavoid\w*\b/gi,
-  risk:      /\brisks?\b|\brisky\b|\bat-risk\b/gi,
-  harmful:   /\bharmful\b|\bharms?\b/gi,
-  failed:    /\bfailed?\b|\bfails?\b|\bfailures?\b/gi,
-  warning:   /\bwarnings?\b|\bwarns?\b/gi,
-};
+function toggleSettings() {
+  const panel = document.getElementById('settings-panel');
+  panel.classList.toggle('open');
+  const btn = document.querySelector('.settings-toggle');
+  btn.textContent = panel.classList.contains('open') ? '⚙ 自定义词库 ▴' : '⚙ 自定义词库 ▾';
+}
 
+// ══════════════════════════════════════════════════════════
+// Helpers
+// ══════════════════════════════════════════════════════════
 function updateCount() {
   const len = document.getElementById('input-text').value.length;
   document.getElementById('char-count').textContent = len.toLocaleString() + ' 字符';
   document.getElementById('analyze-btn').disabled = len < 10;
 }
 
-function analyze() {
-  const text = document.getElementById('input-text').value.trim();
-  if (!text) return;
+function escapeHtml(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 
-  // Count each word dynamically
-  const words = loadWords();
+function buildRegex(word, flags='gi') {
+  const e = word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  // For short words (≤4 chars) use exact match, longer use prefix match
+  return word.length <= 4
+    ? new RegExp('\\b' + e + 's?\\b', flags)
+    : new RegExp('\\b' + e + '\\w*\\b', flags);
+}
+
+// ══════════════════════════════════════════════════════════
+// D1 — Red word count
+// ══════════════════════════════════════════════════════════
+function analyzeD1(text) {
+  const words = loadList('d1');
   const counts = {};
   let total = 0;
-  for (const word of words) {
-    const regex = buildRegex(word);
-    const matches = text.match(regex) || [];
-    counts[word] = matches.length;
-    total += matches.length;
+  for (const w of words) {
+    const m = text.match(buildRegex(w)) || [];
+    counts[w] = m.length;
+    total += m.length;
   }
-
-  // Determine level
-  const level = total === 0 ? 'zero' : total <= 2 ? 'low' : total <= 4 ? 'mid' : 'high';
   const pass = total <= 2;
+  return {
+    pass,
+    total,
+    counts,
+    label: 'D1 · 定性强度',
+    sub: `红色词出现 ${total} 次（≤2次通过）`,
+    detail: Object.entries(counts).filter(([,v])=>v>0).map(([k,v])=>`${k}×${v}`),
+    desc: pass
+      ? total === 0 ? '未出现任何定性负面词汇。' : `红色词出现 ${total} 次，在合理范围内。`
+      : `红色词出现 ${total} 次，超出阈值，回答存在过度定性。`,
+  };
+}
 
-  // ── Verdict ──
-  const verdictBox = document.getElementById('verdict-box');
-  verdictBox.innerHTML = `
-    <div class="verdict-banner ${pass ? 'pass' : 'fail'}" style="margin-bottom:28px">
-      <div class="verdict-icon">${pass ? '✅' : '❌'}</div>
-      <div class="verdict-body">
-        <div class="verdict-title">D1 定性强度：${pass ? '通过' : '触发风险'}</div>
-        <div class="verdict-desc">
-          红色词共出现 <strong>${total}</strong> 次。
-          判断标准：≤ 2次 → 通过，> 2次 → 触发风险。
-          ${total === 0 ? '回答完全未使用定性负面词汇。' :
-            pass ? '红色词使用在合理范围内，未过度定性。' :
-            total <= 4 ? '红色词偏多，回答倾向强化负面印象，建议复核。' :
-            '红色词过多，AI对平台做出了强定性负面判断。'}
-        </div>
-      </div>
-    </div>
-  `;
+// ══════════════════════════════════════════════════════════
+// D2 — Structural negative sections
+// ══════════════════════════════════════════════════════════
+function analyzeD2(text) {
+  const words = loadList('d2');
+  const lines = text.split('\n');
+  const hitLines = [];
 
-  // ── Score ──
-  const scoreEl = document.getElementById('score-num');
-  scoreEl.textContent = total;
-  scoreEl.className = 'score-num ' + level;
-  document.getElementById('score-label').textContent =
-    total === 0 ? '零触发' : total <= 2 ? '低触发' : total <= 4 ? '中度触发' : '高度触发';
-  document.getElementById('score-sublabel').textContent = '次红色词出现';
+  for (const line of lines) {
+    const t = line.trim();
+    if (!t) continue;
+    // Detect section headers: ALL CAPS, starts with #, starts with emoji warning signs
+    const isHeader =
+      /^#{1,3}\s/.test(t) ||
+      /^[⚠🚫❌⛔🔴]\s/.test(t) ||
+      (t === t.toUpperCase() && t.length > 4 && /[A-Z]{3}/.test(t)) ||
+      /^(The |What |Why |How |When |Bottom|Risk|Concern|Problem|Warning|Avoid)/i.test(t);
 
-  // ── Word grid ──
-  const grid = document.getElementById('word-grid');
-  grid.innerHTML = Object.entries(counts).map(([word, count]) => `
-    <div class="word-card ${count > 0 ? 'hit' : ''}">
-      <div class="word-card-name">${word}</div>
-      <div class="word-card-count">${count}</div>
-      <div class="word-card-sub">${count > 0 ? '次' : '未出现'}</div>
-    </div>
-  `).join('');
-
-  // ── Contexts (sentences containing red words) ──
-  const contextsEl = document.getElementById('contexts');
-  const contextLabel = document.getElementById('context-label');
-  const sentences = text.split(/(?<=[.!?。！？\n])\s*/);
-  const found = [];
-
-  for (const sentence of sentences) {
-    const s = sentence.trim();
-    if (!s) continue;
-    for (const word of words) {
-      const regex = buildRegex(word);
-      if (regex.test(s)) {
-        found.push({ word, sentence: s });
-        break;
+    if (isHeader) {
+      const lower = t.toLowerCase();
+      for (const w of words) {
+        if (lower.includes(w.toLowerCase())) {
+          hitLines.push(t.slice(0, 80));
+          break;
+        }
       }
     }
   }
 
-  if (found.length > 0) {
-    contextLabel.style.display = '';
-    contextsEl.innerHTML = found.map(({ word, sentence }) => {
-      const ctxPattern = words.map(w => {
-        const esc = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        return '\\b' + esc + '\\w*\\b';
-      }).join('|');
-      const highlighted = sentence.replace(new RegExp(ctxPattern, 'gi'), m => `<mark>${m}</mark>`);
-      return `
-        <div class="context-item">
-          <span class="context-tag">${word}</span>
-          <span class="context-sentence">${highlighted}</span>
-        </div>
-      `;
-    }).join('');
-  } else {
-    contextLabel.style.display = 'none';
-    contextsEl.innerHTML = '';
+  const pass = hitLines.length === 0;
+  return {
+    pass,
+    total: hitLines.length,
+    hitLines,
+    label: 'D2 · 结构性负面',
+    sub: pass ? '无独立负面Section' : `发现 ${hitLines.length} 个负面Section标题`,
+    detail: hitLines.map(l => l.slice(0,50) + (l.length>50?'…':'')),
+    desc: pass
+      ? '回答未单独设立负面章节，负面信息未被结构化放大。'
+      : `发现 ${hitLines.length} 个专门的负面章节标题，将负面信息结构化呈现。`,
+  };
+}
+
+// ══════════════════════════════════════════════════════════
+// D3 — Data verifiability
+// ══════════════════════════════════════════════════════════
+function analyzeD3(text) {
+  // Detect specific numbers/percentages
+  const numMatches = text.match(/\d+[\-–]\d+%|\d+%|\d+\s*(?:out of|of)\s*\d+/gi) || [];
+
+  if (numMatches.length === 0) {
+    return {
+      pass: true, na: true,
+      label: 'D3 · 数据可核实性',
+      sub: '未引用具体数据，直接通过',
+      detail: [],
+      desc: '回答未引用任何具体数字，D3自动通过。',
+    };
   }
 
-  // ── Full text highlight ──
-  let highlighted = escapeHtml(text);
-  // Build combined regex from current word list
-  const combinedPattern = words.map(w => {
-    const escaped = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return '\\b' + escaped + '\\w*\\b';
-  }).join('|');
-  const combined = new RegExp(combinedPattern, 'gi');
-  highlighted = highlighted.replace(combined, m => `<mark>${m}</mark>`);
-  document.getElementById('highlight-body').innerHTML = highlighted;
+  // Check for source indicators
+  const sourcePatterns = [
+    /according to/i, /reported by/i, /source:/i, /\[\d+\]/,
+    /study by/i, /research by/i, /\(20\d\d\)/, /20\d\d report/i,
+    /EU |FDA |RAPEX|CPSC|Which\?|Consumer/i,
+  ];
+  const hasSource = sourcePatterns.some(p => p.test(text));
 
-  // Show results
+  // Check for citation markers (superscript indicators in plain text)
+  const hasCitation = /\[\d+\]|\(\d{4}\)|et al\.|ibid/i.test(text);
+
+  const pass = hasSource || hasCitation;
+
+  return {
+    pass,
+    total: numMatches.length,
+    numMatches,
+    hasSource,
+    label: 'D3 · 数据可核实性',
+    sub: pass ? `引用了 ${numMatches.length} 个数据，有来源标注` : `引用了 ${numMatches.length} 个数据，但无来源`,
+    detail: numMatches.slice(0, 5),
+    desc: pass
+      ? '引用的数据有来源标注，可核实。'
+      : `引用了 ${numMatches.length} 个具体数字但未标注来源，无法核实。`,
+  };
+}
+
+// ══════════════════════════════════════════════════════════
+// D4 — Avoidance recommendation
+// ══════════════════════════════════════════════════════════
+function analyzeD4(text) {
+  const phrases = loadList('d4');
+  const lower = text.toLowerCase();
+  const hits = [];
+
+  for (const phrase of phrases) {
+    if (lower.includes(phrase.toLowerCase())) {
+      // Find context
+      const idx = lower.indexOf(phrase.toLowerCase());
+      const start = Math.max(0, idx - 30);
+      const end = Math.min(text.length, idx + phrase.length + 50);
+      hits.push({ phrase, context: '…' + text.slice(start, end).trim() + '…' });
+    }
+  }
+
+  const pass = hits.length === 0;
+  return {
+    pass,
+    total: hits.length,
+    hits,
+    label: 'D4 · 行动建议方向',
+    sub: pass ? '未建议用户回避特定品类' : `发现 ${hits.length} 处回避建议`,
+    detail: hits.map(h => h.phrase),
+    desc: pass
+      ? '回答给出了中性的购物建议，未明确建议用户回避。'
+      : `发现明确的回避建议词组，等同于建议用户不购买。`,
+  };
+}
+
+// ══════════════════════════════════════════════════════════
+// D5 — Competitor fairness
+// ══════════════════════════════════════════════════════════
+function analyzeD5(text) {
+  const competitors = loadList('d5');
+  const lower = text.toLowerCase();
+  const found = competitors.filter(c => lower.includes(c.toLowerCase()));
+  const pass = found.length > 0;
+
+  return {
+    pass,
+    found,
+    notFound: competitors.filter(c => !lower.includes(c.toLowerCase())),
+    label: 'D5 · 竞品公平性',
+    sub: pass ? `提到了竞品：${found.join(', ')}` : '未提及任何竞品',
+    detail: found,
+    desc: pass
+      ? `提到了 ${found.join('、')} 等平台，说明AI有横向对比意识，问题非特有。`
+      : '全文未提及任何同类平台，问题被隐性描述为特有，存在双重标准风险。',
+  };
+}
+
+// ══════════════════════════════════════════════════════════
+// Main analyze
+// ══════════════════════════════════════════════════════════
+function analyze() {
+  const text = document.getElementById('input-text').value.trim();
+  if (!text) return;
+
+  const d1 = analyzeD1(text);
+  const d2 = analyzeD2(text);
+  const d3 = analyzeD3(text);
+  const d4 = analyzeD4(text);
+  const d5 = analyzeD5(text);
+  const dims = [d1, d2, d3, d4, d5];
+
+  const failCount = dims.filter(d => !d.pass).length;
+  const level = failCount <= 1 ? 'pass' : failCount <= 3 ? 'warn' : 'fail';
+  const verdicts = { pass: '🟢 低风险', warn: '🟡 需关注', fail: '🔴 高风险' };
+  const descs = {
+    pass: `${failCount} 个维度触发，Narrative整体健康。`,
+    warn: `${failCount} 个维度触发，存在改善空间，建议关注。`,
+    fail: `${failCount} 个维度触发，AI对平台有强定性负面Narrative，需公关介入。`,
+  };
+
+  // ── Meta display
+  const platform = document.getElementById('meta-platform').value;
+  const prompt = document.getElementById('meta-prompt').value;
+  const date = document.getElementById('meta-date').value;
+  const metaEl = document.getElementById('meta-display');
+  metaEl.innerHTML = [
+    platform && `平台 <span>${platform}</span>`,
+    prompt   && `Prompt <span>${prompt}</span>`,
+    date     && `日期 <span>${date}</span>`,
+    `触发维度数 <span>${failCount}/5</span>`,
+  ].filter(Boolean).join(' · ');
+
+  // ── Overall card
+  document.getElementById('overall-card').innerHTML = `
+    <div class="overall-card ${level}">
+      <div class="overall-num">${failCount}<span style="font-size:24px;font-family:'DM Mono',monospace;font-weight:400">/5</span></div>
+      <div class="overall-meta">
+        <div class="overall-verdict">${verdicts[level]}</div>
+        <div class="overall-desc">${descs[level]}</div>
+      </div>
+      <div class="overall-badge">${failCount === 0 ? '全部通过' : failCount + ' 项触发'}</div>
+    </div>
+  `;
+
+  // ── Dimension cards
+  const dimData = [d1, d2, d3, d4, d5];
+  document.getElementById('dim-grid').innerHTML = dimData.map((d, i) => {
+    const cardClass = d.na ? 'na' : d.pass ? 'pass' : 'fail';
+    const icon = d.na ? '➖' : d.pass ? '✅' : '❌';
+
+    let detailHtml = '';
+    if (i === 0 && d.detail.length > 0) {
+      detailHtml = '<div class="dim-detail">' + d.detail.map(w => `<span class="hit">${w}</span>`).join('') + '</div>';
+    } else if (i === 1 && d.detail.length > 0) {
+      detailHtml = '<div class="dim-detail">' + d.detail.map(w => `<span class="hit">${w}</span>`).join('') + '</div>';
+    } else if (i === 2 && !d.na) {
+      detailHtml = '<div class="dim-detail">' + (d.numMatches||[]).slice(0,4).map(w => `<span class="${d.pass?'':'hit'}">${w}</span>`).join('') + '</div>';
+    } else if (i === 3 && d.detail.length > 0) {
+      detailHtml = '<div class="dim-detail">' + d.detail.map(w => `<span class="hit">${w}</span>`).join('') + '</div>';
+    } else if (i === 4) {
+      detailHtml = '<div class="dim-detail">'
+        + (d.found||[]).map(w=>`<span class="hit-green">${w}</span>`).join('')
+        + (d.notFound||[]).slice(0,4).map(w=>`<span>${w}</span>`).join('')
+        + '</div>';
+    }
+
+    return `
+      <div class="dim-card ${cardClass}${i===2?' full-width':''}">
+        <div class="dim-header">
+          <div class="dim-verdict-icon">${icon}</div>
+          <div>
+            <div class="dim-title">${d.label}</div>
+            <div class="dim-subtitle">${d.sub}</div>
+          </div>
+        </div>
+        <div class="dim-body">
+          ${d.desc}
+          ${detailHtml}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // ── Full text highlight
+  let html = escapeHtml(text);
+
+  // D5 competitors (green = pass context)
+  const d5words = loadList('d5');
+  for (const w of d5words) {
+    const re = new RegExp('\\b' + w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '\\b', 'gi');
+    html = html.replace(re, m => `<mark class="${d5.pass ? 'd5-pos' : 'd5'}">${m}</mark>`);
+  }
+
+  // D4 avoidance phrases
+  const d4words = loadList('d4');
+  for (const phrase of d4words) {
+    const re = new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'gi');
+    html = html.replace(re, m => `<mark class="d4">${m}</mark>`);
+  }
+
+  // D2 negative section headers — highlight whole lines
+  const lines = html.split('\n');
+  const d2words = loadList('d2');
+  const markedLines = lines.map(line => {
+    const plain = line.replace(/<[^>]+>/g,'').trim();
+    const isHeader = /^#{1,3}\s/.test(plain) || /^[⚠🚫❌⛔🔴]\s/.test(plain) ||
+      (plain === plain.toUpperCase() && plain.length > 4 && /[A-Z]{3}/.test(plain)) ||
+      /^(The |What |Why |How |When |Bottom|Risk|Concern|Problem|Warning|Avoid)/i.test(plain);
+    if (!isHeader) return line;
+    const lower = plain.toLowerCase();
+    const isNeg = d2words.some(w => lower.includes(w));
+    return isNeg ? `<mark class="d2">${line}</mark>` : line;
+  });
+  html = markedLines.join('\n');
+
+  // D1 red words
+  const d1words = loadList('d1');
+  for (const w of d1words) {
+    const re = buildRegex(w);
+    html = html.replace(re, m => {
+      if (m.includes('<mark')) return m;
+      return `<mark class="d1">${m}</mark>`;
+    });
+  }
+
+  document.getElementById('highlight-body').innerHTML = html;
+
+  // Show
   document.getElementById('results').style.display = 'block';
   document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function escapeHtml(text) {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
-
-function reset() {
+function resetAll() {
   document.getElementById('results').style.display = 'none';
   document.getElementById('input-text').value = '';
   document.getElementById('char-count').textContent = '0 字符';
@@ -734,7 +1022,11 @@ function reset() {
 }
 
 // Init
-document.getElementById('analyze-btn').disabled = true;
+document.addEventListener('DOMContentLoaded', () => {
+  renderAllTags();
+  // Set today's date
+  document.getElementById('meta-date').valueAsDate = new Date();
+});
 </script>
 </body>
 </html>
