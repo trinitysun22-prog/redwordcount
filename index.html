@@ -34,6 +34,74 @@
     overflow-x: hidden;
   }
 
+  /* ── API Key box ── */
+  .apikey-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+  }
+  .apikey-box.saved {
+    border-color: rgba(0,212,138,0.3);
+    background: rgba(0,212,138,0.05);
+  }
+  .apikey-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .apikey-link {
+    color: var(--orange);
+    text-decoration: none;
+    margin-left: auto;
+    font-size: 11px;
+  }
+  .apikey-link:hover { text-decoration: underline; }
+  .apikey-row {
+    display: flex; gap: 10px;
+  }
+  #apikey-input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  #apikey-input:focus { border-color: var(--orange); }
+  #apikey-input.valid { border-color: var(--green); }
+  .apikey-save-btn {
+    background: var(--orange);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .apikey-save-btn:hover { background: #FF7A20; }
+  .apikey-hint {
+    margin-top: 8px;
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    min-height: 16px;
+  }
+  .apikey-hint.ok  { color: var(--green); }
+  .apikey-hint.err { color: var(--red); }
+
   /* ── Noise texture overlay ── */
   body::before {
     content: '';
@@ -445,6 +513,20 @@
     </div>
   </header>
 
+  <!-- API Key input -->
+  <div class="apikey-box" id="apikey-box">
+    <div class="apikey-label">
+      <span>🔑</span>
+      <span>Anthropic API Key</span>
+      <a href="https://console.anthropic.com/settings/keys" target="_blank" class="apikey-link">获取 Key →</a>
+    </div>
+    <div class="apikey-row">
+      <input type="password" id="apikey-input" placeholder="sk-ant-..." spellcheck="false" autocomplete="off">
+      <button class="apikey-save-btn" onclick="saveApiKey()">保存</button>
+    </div>
+    <div class="apikey-hint" id="apikey-hint"></div>
+  </div>
+
   <!-- Upload -->
   <div class="upload-zone" id="upload-zone">
     <input type="file" id="file-input" accept="image/*">
@@ -500,6 +582,62 @@ const RED_WORDS = ['dangerous','toxic','unsafe','avoid','risk','harmful','failed
 let imageBase64 = null;
 let imageType = null;
 
+// ── API Key management ─────────────────────────────────────
+function getApiKey() {
+  return localStorage.getItem('anthropic_api_key') || '';
+}
+
+function saveApiKey() {
+  const input = document.getElementById('apikey-input');
+  const key = input.value.trim();
+  const hint = document.getElementById('apikey-hint');
+  const box = document.getElementById('apikey-box');
+
+  if (!key.startsWith('sk-ant-')) {
+    hint.textContent = '⚠ Key 格式不对，应以 sk-ant- 开头';
+    hint.className = 'apikey-hint err';
+    return;
+  }
+  localStorage.setItem('anthropic_api_key', key);
+  input.className = 'valid';
+  box.classList.add('saved');
+  hint.textContent = '✓ 已保存到本地，下次打开自动填入';
+  hint.className = 'apikey-hint ok';
+  // Mask display
+  input.value = key.slice(0, 14) + '•'.repeat(20) + key.slice(-4);
+}
+
+function loadSavedKey() {
+  const key = getApiKey();
+  if (!key) return;
+  const input = document.getElementById('apikey-input');
+  const hint = document.getElementById('apikey-hint');
+  const box = document.getElementById('apikey-box');
+  input.value = key.slice(0, 14) + '•'.repeat(20) + key.slice(-4);
+  input.className = 'valid';
+  box.classList.add('saved');
+  hint.textContent = '✓ 已读取本地保存的 Key';
+  hint.className = 'apikey-hint ok';
+}
+
+// Load on startup
+document.addEventListener('DOMContentLoaded', loadSavedKey);
+
+// Allow re-edit on click
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('apikey-input');
+  input.addEventListener('focus', () => {
+    const key = getApiKey();
+    if (key) input.value = key;
+  });
+  input.addEventListener('blur', () => {
+    const key = getApiKey();
+    if (key && input.value === key) {
+      input.value = key.slice(0, 14) + '•'.repeat(20) + key.slice(-4);
+    }
+  });
+});
+
 // ── Drag & drop ────────────────────────────────────────────
 const zone = document.getElementById('upload-zone');
 zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
@@ -554,6 +692,13 @@ function showError(msg) {
 async function analyze() {
   if (!imageBase64) return;
 
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    showError('请先填写并保存 Anthropic API Key');
+    document.getElementById('apikey-input').focus();
+    return;
+  }
+
   hideResults(); hideError();
   document.getElementById('loading-state').style.display = 'block';
   document.getElementById('analyze-btn').disabled = true;
@@ -598,6 +743,7 @@ Return ONLY valid JSON, no markdown, no explanation:
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "x-api-key": getApiKey(),
         "anthropic-version": "2023-06-01",
         "anthropic-dangerous-direct-browser-access": "true"
       },
