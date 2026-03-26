@@ -566,7 +566,15 @@ h1 em {
 
   <!-- Metadata -->
   <div class="section-label">测试信息（选填）</div>
-  <div class="meta-row">
+  <div class="meta-row" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
+    <div class="meta-field">
+      <label>问题类型</label>
+      <select id="meta-qtype" onchange="updateDimLabels()">
+        <option value="neutral">🔵 中性问题</option>
+        <option value="risk">🟠 风险导向</option>
+        <option value="pressure">🔴 压力测试</option>
+      </select>
+    </div>
     <div class="meta-field">
       <label>AI 平台</label>
       <select id="meta-platform">
@@ -712,6 +720,25 @@ function buildRegex(word, flags='gi') {
 }
 
 // ══════════════════════════════════════════════════════════
+// Question type helpers
+// ══════════════════════════════════════════════════════════
+function getQType() {
+  return document.getElementById('meta-qtype').value;
+}
+
+function isNeutral() { return getQType() === 'neutral'; }
+
+function updateDimLabels() {
+  const neutral = isNeutral();
+  const d1label = document.querySelector('[data-dim="d1-label"]');
+  const d2label = document.querySelector('[data-dim="d2-label"]');
+  const d4label = document.querySelector('[data-dim="d4-label"]');
+  if (d1label) d1label.textContent = neutral ? 'D1 · 定性强度' : 'D1 · 定性强度 ➖ 豁免';
+  if (d2label) d2label.textContent = neutral ? 'D2 · 结构性负面' : 'D2 · 结构性负面 ➖ 豁免';
+  if (d4label) d4label.textContent = neutral ? 'D4 · 行动建议方向' : 'D4 · 平衡视角';
+}
+
+// ══════════════════════════════════════════════════════════
 // D1 — Red word count
 // ══════════════════════════════════════════════════════════
 function analyzeD1(text) {
@@ -722,6 +749,16 @@ function analyzeD1(text) {
     const m = text.match(buildRegex(w)) || [];
     counts[w] = m.length;
     total += m.length;
+  }
+  if (!isNeutral()) {
+    return {
+      pass: true, exempt: true,
+      label: 'D1 · 定性强度',
+      sub: '➖ 豁免（风险导向/压力测试问题）',
+      detail: [],
+      desc: '此类问题本身在引导负面回答，D1自动豁免，不计入触发数。',
+      counts, total,
+    };
   }
   const pass = total <= 2;
   return {
@@ -766,6 +803,16 @@ function analyzeD2(text) {
     }
   }
 
+  if (!isNeutral()) {
+    return {
+      pass: true, exempt: true,
+      label: 'D2 · 结构性负面',
+      sub: '➖ 豁免（风险导向/压力测试问题）',
+      detail: [],
+      desc: '此类问题本身要求列举风险，独立负面章节属正常回答结构，D2自动豁免。',
+      hitLines: [],
+    };
+  }
   const pass = hitLines.length === 0;
   return {
     pass,
@@ -825,23 +872,51 @@ function analyzeD3(text) {
 }
 
 // ══════════════════════════════════════════════════════════
-// D4 — Avoidance recommendation
+// D4 — Avoidance (neutral) / Balance (risk/pressure)
 // ══════════════════════════════════════════════════════════
+
+// Positive balance indicators for risk/pressure questions
+const BALANCE_PHRASES = [
+  'generally okay','usually fine','can be safe','is safe for','are safe for',
+  'works well','good value','recommend checking','how to shop','shop smarter',
+  'tips for','what to look for','when temu is','some buyers','many buyers',
+  'non-critical','simple items','low-risk','budget','affordable',
+  'industry-wide','all platforms','third-party sellers','marketplace',
+];
+
 function analyzeD4(text) {
+  if (!isNeutral()) {
+    // For risk/pressure: check if AI gave any balanced perspective
+    const lower = text.toLowerCase();
+    const balanceHits = BALANCE_PHRASES.filter(p => lower.includes(p));
+    const pass = balanceHits.length > 0;
+    return {
+      pass,
+      total: balanceHits.length,
+      balanceHits,
+      label: 'D4 · 平衡视角',
+      sub: pass
+        ? `发现 ${balanceHits.length} 处平衡性表述`
+        : '仅列举风险，未给出任何平衡视角',
+      detail: balanceHits.slice(0, 5),
+      desc: pass
+        ? `在列举风险的同时，AI给出了平衡视角（如说明哪些情况OK、给购物建议等）。`
+        : '回答只列举了风险，没有任何平衡性表述，存在片面放大负面的风险。',
+    };
+  }
+
+  // Original D4 logic for neutral questions
   const phrases = loadList('d4');
   const lower = text.toLowerCase();
   const hits = [];
-
   for (const phrase of phrases) {
     if (lower.includes(phrase.toLowerCase())) {
-      // Find context
       const idx = lower.indexOf(phrase.toLowerCase());
       const start = Math.max(0, idx - 30);
       const end = Math.min(text.length, idx + phrase.length + 50);
       hits.push({ phrase, context: '…' + text.slice(start, end).trim() + '…' });
     }
   }
-
   const pass = hits.length === 0;
   return {
     pass,
@@ -852,7 +927,7 @@ function analyzeD4(text) {
     detail: hits.map(h => h.phrase),
     desc: pass
       ? '回答给出了中性的购物建议，未明确建议用户回避。'
-      : `发现明确的回避建议词组，等同于建议用户不购买。`,
+      : '发现明确的回避建议词组，等同于建议用户不购买。',
   };
 }
 
@@ -892,13 +967,17 @@ function analyze() {
   const d5 = analyzeD5(text);
   const dims = [d1, d2, d3, d4, d5];
 
-  const failCount = dims.filter(d => !d.pass).length;
+  const activeDims = dims.filter(d => !d.exempt);
+  const failCount = dims.filter(d => !d.pass && !d.exempt).length;
+  const activeCount = activeDims.length;
   const level = failCount <= 1 ? 'pass' : failCount <= 3 ? 'warn' : 'fail';
   const verdicts = { pass: '🟢 低风险', warn: '🟡 需关注', fail: '🔴 高风险' };
+  const exemptCount = dims.filter(d => d.exempt).length;
+  const exemptNote = exemptCount > 0 ? `（${exemptCount}个维度已豁免）` : '';
   const descs = {
-    pass: `${failCount} 个维度触发，Narrative整体健康。`,
-    warn: `${failCount} 个维度触发，存在改善空间，建议关注。`,
-    fail: `${failCount} 个维度触发，AI对平台有强定性负面Narrative，需公关介入。`,
+    pass: `${failCount}/${activeCount} 个有效维度触发${exemptNote}，Narrative整体健康。`,
+    warn: `${failCount}/${activeCount} 个有效维度触发${exemptNote}，存在改善空间，建议关注。`,
+    fail: `${failCount}/${activeCount} 个有效维度触发${exemptNote}，AI有强定性负面Narrative，需公关介入。`,
   };
 
   // ── Meta display
@@ -916,7 +995,7 @@ function analyze() {
   // ── Overall card
   document.getElementById('overall-card').innerHTML = `
     <div class="overall-card ${level}">
-      <div class="overall-num">${failCount}<span style="font-size:24px;font-family:'DM Mono',monospace;font-weight:400">/5</span></div>
+      <div class="overall-num">${failCount}<span style="font-size:24px;font-family:'DM Mono',monospace;font-weight:400">/${activeCount}</span></div>
       <div class="overall-meta">
         <div class="overall-verdict">${verdicts[level]}</div>
         <div class="overall-desc">${descs[level]}</div>
@@ -928,8 +1007,8 @@ function analyze() {
   // ── Dimension cards
   const dimData = [d1, d2, d3, d4, d5];
   document.getElementById('dim-grid').innerHTML = dimData.map((d, i) => {
-    const cardClass = d.na ? 'na' : d.pass ? 'pass' : 'fail';
-    const icon = d.na ? '➖' : d.pass ? '✅' : '❌';
+    const cardClass = d.exempt ? 'na' : d.na ? 'na' : d.pass ? 'pass' : 'fail';
+    const icon = d.exempt ? '➖' : d.na ? '➖' : d.pass ? '✅' : '❌';
 
     let detailHtml = '';
     if (i === 0 && d.detail.length > 0) {
