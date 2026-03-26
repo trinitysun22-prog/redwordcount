@@ -3,862 +3,738 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Red Word Analyzer · AI Benchmark</title>
+<title>Red Word Analyzer · D1 维度工具</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Fraunces:ital,wght@0,300;0,600;1,300&display=swap');
 
-  :root {
-    --bg: #0D0F14;
-    --surface: #151820;
-    --surface2: #1C2030;
-    --border: #252A3A;
-    --orange: #FF6600;
-    --orange-dim: rgba(255,102,0,0.12);
-    --red: #FF3B3B;
-    --red-dim: rgba(255,59,59,0.12);
-    --yellow: #FFB800;
-    --green: #00D48A;
-    --text: #E8EAF0;
-    --muted: #5A6178;
-    --highlight-bg: rgba(255,59,59,0.2);
-    --highlight-border: #FF3B3B;
-  }
+:root {
+  --bg: #F7F4EF;
+  --surface: #FFFFFF;
+  --surface2: #F0EDE8;
+  --border: #E2DDD6;
+  --ink: #1A1714;
+  --ink2: #6B6560;
+  --ink3: #A8A29C;
+  --accent: #C84B2F;
+  --accent-dim: rgba(200,75,47,0.08);
+  --accent-mid: rgba(200,75,47,0.15);
+  --green: #2A7D4F;
+  --green-dim: rgba(42,125,79,0.08);
+  --yellow: #B07D2A;
+  --yellow-dim: rgba(176,125,42,0.1);
+  --red: #C84B2F;
+}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Fraunces', Georgia, serif;
+  min-height: 100vh;
+  padding: 0;
+}
 
-  /* ── API Key box ── */
-  .apikey-box {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 20px 24px;
-    margin-bottom: 24px;
-  }
-  .apikey-box.saved {
-    border-color: rgba(0,212,138,0.3);
-    background: rgba(0,212,138,0.05);
-  }
-  .apikey-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 10px;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .apikey-link {
-    color: var(--orange);
-    text-decoration: none;
-    margin-left: auto;
-    font-size: 11px;
-  }
-  .apikey-link:hover { text-decoration: underline; }
-  .apikey-row {
-    display: flex; gap: 10px;
-  }
-  #apikey-input {
-    flex: 1;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 14px;
-    color: var(--text);
-    font-family: 'DM Mono', monospace;
-    font-size: 13px;
-    outline: none;
-    transition: border-color 0.15s;
-  }
-  #apikey-input:focus { border-color: var(--orange); }
-  #apikey-input.valid { border-color: var(--green); }
-  .apikey-save-btn {
-    background: var(--orange);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 20px;
-    font-family: 'Syne', sans-serif;
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.15s;
-    white-space: nowrap;
-  }
-  .apikey-save-btn:hover { background: #FF7A20; }
-  .apikey-hint {
-    margin-top: 8px;
-    font-size: 12px;
-    font-family: 'DM Mono', monospace;
-    min-height: 16px;
-  }
-  .apikey-hint.ok  { color: var(--green); }
-  .apikey-hint.err { color: var(--red); }
+/* ── Ruled paper texture ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: repeating-linear-gradient(
+    transparent,
+    transparent 31px,
+    rgba(180,170,160,0.12) 31px,
+    rgba(180,170,160,0.12) 32px
+  );
+  pointer-events: none;
+  z-index: 0;
+}
 
-  /* ── Noise texture overlay ── */
-  body::before {
-    content: '';
-    position: fixed; inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-    pointer-events: none; z-index: 0; opacity: 0.4;
-  }
+.page {
+  position: relative; z-index: 1;
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 56px 40px 100px;
+}
 
-  .container {
-    position: relative; z-index: 1;
-    max-width: 860px;
-    margin: 0 auto;
-    padding: 48px 24px 80px;
-  }
+/* ── Header ── */
+.masthead {
+  border-bottom: 3px double var(--border);
+  padding-bottom: 28px;
+  margin-bottom: 40px;
+}
 
-  /* ── Header ── */
-  header {
-    margin-bottom: 48px;
-  }
+.issue-line {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: 16px;
+  display: flex; align-items: center; gap: 16px;
+}
+.issue-line::after {
+  content: '';
+  flex: 1; height: 1px;
+  background: var(--border);
+}
 
-  .eyebrow {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--orange);
-    margin-bottom: 12px;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .eyebrow::before {
-    content: '';
-    display: inline-block;
-    width: 20px; height: 2px;
-    background: var(--orange);
-  }
+h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(36px, 6vw, 60px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--ink);
+}
+h1 em {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-weight: 300;
+  color: var(--accent);
+}
 
-  h1 {
-    font-family: 'Syne', sans-serif;
-    font-size: clamp(28px, 5vw, 44px);
-    font-weight: 800;
-    line-height: 1.1;
-    letter-spacing: -0.02em;
-  }
-  h1 span { color: var(--red); }
+.deck {
+  margin-top: 14px;
+  font-size: 15px;
+  color: var(--ink2);
+  font-style: italic;
+  font-weight: 300;
+  line-height: 1.6;
+  max-width: 500px;
+}
 
-  .subtitle {
-    margin-top: 12px;
-    color: var(--muted);
-    font-size: 14px;
-    line-height: 1.6;
-    max-width: 520px;
-  }
+/* ── Red word tags ── */
+.word-row {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.wtag {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  padding: 3px 9px;
+  border: 1px solid rgba(200,75,47,0.3);
+  border-radius: 2px;
+  color: var(--accent);
+  background: var(--accent-dim);
+  letter-spacing: 0.05em;
+}
 
-  /* ── Red word chips ── */
-  .word-chips {
-    display: flex; flex-wrap: wrap; gap: 8px;
-    margin-top: 20px;
-  }
-  .chip {
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    padding: 4px 10px;
-    border-radius: 4px;
-    background: var(--red-dim);
-    border: 1px solid rgba(255,59,59,0.3);
-    color: #FF7A7A;
-  }
+/* ── Section label ── */
+.section-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 10px;
+}
+.section-label::after { content: ''; flex:1; height:1px; background: var(--border); }
 
-  /* ── Upload zone ── */
-  .upload-zone {
-    border: 2px dashed var(--border);
-    border-radius: 16px;
-    padding: 48px 32px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    background: var(--surface);
-    position: relative;
-    overflow: hidden;
-  }
-  .upload-zone:hover, .upload-zone.drag-over {
-    border-color: var(--orange);
-    background: var(--orange-dim);
-  }
-  .upload-zone.drag-over { transform: scale(1.01); }
+/* ── Textarea ── */
+.paste-area {
+  width: 100%;
+  min-height: 200px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 20px;
+  font-family: 'Fraunces', serif;
+  font-size: 14px;
+  font-style: italic;
+  color: var(--ink);
+  line-height: 1.8;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  margin-bottom: 4px;
+}
+.paste-area:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+.paste-area::placeholder { color: var(--ink3); font-style: italic; }
 
-  .upload-icon {
-    width: 56px; height: 56px;
-    margin: 0 auto 16px;
-    border-radius: 12px;
-    background: var(--orange-dim);
-    border: 1px solid rgba(255,102,0,0.3);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 24px;
-  }
+.char-count {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--ink3);
+  text-align: right;
+  margin-bottom: 16px;
+}
 
-  .upload-label {
-    font-family: 'Syne', sans-serif;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text);
-    margin-bottom: 6px;
-  }
-  .upload-sub {
-    font-size: 13px;
-    color: var(--muted);
-  }
-  .upload-sub span {
-    color: var(--orange);
-    font-weight: 500;
-    cursor: pointer;
-    text-decoration: underline;
-    text-underline-offset: 3px;
-  }
+/* ── Analyze button ── */
+.analyze-btn {
+  width: 100%;
+  padding: 16px;
+  background: var(--ink);
+  color: var(--bg);
+  border: none;
+  border-radius: 4px;
+  font-family: 'Syne', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 40px;
+}
+.analyze-btn:hover:not(:disabled) {
+  background: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(200,75,47,0.25);
+}
+.analyze-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
 
-  #file-input { display: none; }
+/* ── Results ── */
+.results {
+  display: none;
+  animation: fadeIn 0.35s ease;
+}
+@keyframes fadeIn { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform: none; } }
 
-  /* ── Preview ── */
-  .preview-box {
-    display: none;
-    margin-top: 20px;
-    border-radius: 12px;
-    overflow: hidden;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    position: relative;
-  }
-  .preview-box img {
-    width: 100%;
-    max-height: 320px;
-    object-fit: contain;
-    display: block;
-    background: #0a0a0a;
-  }
-  .preview-label {
-    padding: 10px 16px;
-    font-size: 12px;
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-    border-top: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .remove-btn {
-    background: none; border: none;
-    color: var(--muted); cursor: pointer;
-    font-size: 12px; font-family: 'DM Mono', monospace;
-    padding: 2px 6px; border-radius: 4px;
-    transition: all 0.15s;
-  }
-  .remove-btn:hover { color: var(--red); background: var(--red-dim); }
+/* D1 verdict banner */
+.verdict-banner {
+  border-radius: 4px;
+  padding: 20px 24px;
+  margin-bottom: 32px;
+  display: flex; align-items: flex-start; gap: 16px;
+  border-left: 4px solid;
+}
+.verdict-banner.pass {
+  background: var(--green-dim);
+  border-color: var(--green);
+}
+.verdict-banner.fail {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}
+.verdict-icon { font-size: 22px; line-height: 1; margin-top: 2px; }
+.verdict-body {}
+.verdict-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.verdict-banner.pass .verdict-title { color: var(--green); }
+.verdict-banner.fail .verdict-title { color: var(--accent); }
+.verdict-desc { font-size: 13px; color: var(--ink2); line-height: 1.5; font-style: italic; }
 
-  /* ── Analyze button ── */
-  .analyze-btn {
-    width: 100%;
-    margin-top: 20px;
-    padding: 16px;
-    border-radius: 12px;
-    border: none;
-    background: var(--orange);
-    color: white;
-    font-family: 'Syne', sans-serif;
-    font-size: 16px;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    position: relative;
-    overflow: hidden;
-  }
-  .analyze-btn:hover:not(:disabled) {
-    background: #FF7A20;
-    transform: translateY(-1px);
-    box-shadow: 0 8px 24px rgba(255,102,0,0.35);
-  }
-  .analyze-btn:disabled {
-    opacity: 0.4; cursor: not-allowed; transform: none;
-  }
+/* Score total */
+.score-total {
+  display: flex; align-items: baseline; gap: 10px;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.score-num {
+  font-family: 'Syne', sans-serif;
+  font-size: 56px;
+  font-weight: 800;
+  line-height: 1;
+}
+.score-num.zero { color: var(--green); }
+.score-num.low  { color: var(--green); }
+.score-num.mid  { color: var(--yellow); }
+.score-num.high { color: var(--accent); }
+.score-meta { font-size: 13px; color: var(--ink2); font-style: italic; }
+.score-meta strong { display: block; font-size: 16px; color: var(--ink); font-style: normal; font-family: 'Syne', sans-serif; font-weight: 600; }
 
-  /* ── Loading ── */
-  .loading-state {
-    display: none;
-    margin-top: 32px;
-    padding: 24px;
-    border-radius: 12px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    text-align: center;
-  }
-  .spinner {
-    width: 32px; height: 32px;
-    border: 3px solid var(--border);
-    border-top-color: var(--orange);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin: 0 auto 12px;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-text {
-    font-size: 13px; color: var(--muted);
-    font-family: 'DM Mono', monospace;
-  }
+/* Word breakdown grid */
+.word-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 32px;
+}
+@media (max-width: 560px) { .word-grid { grid-template-columns: repeat(2,1fr); } }
 
-  /* ── Results ── */
-  .results {
-    display: none;
-    margin-top: 32px;
-    animation: fadeUp 0.4s ease;
-  }
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
+.word-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 14px 16px;
+  transition: all 0.15s;
+}
+.word-card.hit {
+  background: var(--accent-dim);
+  border-color: rgba(200,75,47,0.35);
+}
+.word-card-name {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--ink2);
+  margin-bottom: 8px;
+  letter-spacing: 0.03em;
+}
+.word-card.hit .word-card-name { color: var(--accent); }
+.word-card-count {
+  font-family: 'Syne', sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+}
+.word-card.hit .word-card-count { color: var(--accent); }
+.word-card:not(.hit) .word-card-count { color: var(--ink3); }
+.word-card-sub {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  color: var(--ink3);
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
 
-  /* Score card */
-  .score-card {
-    border-radius: 16px;
-    padding: 28px 32px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    margin-bottom: 20px;
-    display: flex; align-items: center; gap: 28px;
-  }
-  .score-number {
-    font-family: 'Syne', sans-serif;
-    font-size: 72px;
-    font-weight: 800;
-    line-height: 1;
-    min-width: 100px;
-    text-align: center;
-  }
-  .score-number.pass  { color: var(--green); }
-  .score-number.warn  { color: var(--yellow); }
-  .score-number.fail  { color: var(--red); }
+/* Highlighted text */
+.highlight-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  margin-bottom: 32px;
+  overflow: hidden;
+}
+.highlight-header {
+  padding: 10px 16px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink3);
+}
+.highlight-body {
+  padding: 20px;
+  font-size: 14px;
+  line-height: 1.9;
+  color: var(--ink2);
+  font-style: italic;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.highlight-body mark {
+  background: rgba(200,75,47,0.18);
+  color: var(--accent);
+  border-radius: 2px;
+  padding: 1px 2px;
+  font-weight: 600;
+  font-style: normal;
+  border-bottom: 2px solid rgba(200,75,47,0.4);
+}
 
-  .score-meta { flex: 1; }
-  .score-verdict {
-    font-family: 'Syne', sans-serif;
-    font-size: 20px; font-weight: 700;
-    margin-bottom: 6px;
-  }
-  .score-verdict.pass { color: var(--green); }
-  .score-verdict.warn { color: var(--yellow); }
-  .score-verdict.fail { color: var(--red); }
+/* Context sentences */
+.contexts {
+  margin-bottom: 32px;
+}
+.context-item {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+  display: flex; gap: 14px;
+  align-items: flex-start;
+}
+.context-item:last-child { border-bottom: none; }
+.context-tag {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  padding: 3px 8px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border-radius: 2px;
+  white-space: nowrap;
+  margin-top: 2px;
+  border: 1px solid rgba(200,75,47,0.2);
+}
+.context-sentence {
+  font-size: 13px;
+  color: var(--ink2);
+  line-height: 1.6;
+  font-style: italic;
+}
+.context-sentence mark {
+  background: rgba(200,75,47,0.15);
+  color: var(--accent);
+  font-style: normal;
+  font-weight: 600;
+  border-radius: 2px;
+  padding: 0 2px;
+}
 
-  .score-desc {
-    font-size: 13px; color: var(--muted); line-height: 1.5;
-  }
+/* Reset */
+.reset-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px 20px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--ink3);
+  cursor: pointer;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: all 0.15s;
+  display: block;
+  margin: 0 auto;
+}
+.reset-btn:hover { color: var(--accent); border-color: var(--accent); }
 
-  .score-badge {
-    padding: 6px 14px;
-    border-radius: 8px;
-    font-family: 'DM Mono', monospace;
-    font-size: 12px; font-weight: 500;
-    white-space: nowrap;
-  }
-  .score-badge.pass { background: rgba(0,212,138,0.12); color: var(--green); border: 1px solid rgba(0,212,138,0.3); }
-  .score-badge.warn { background: rgba(255,184,0,0.12); color: var(--yellow); border: 1px solid rgba(255,184,0,0.3); }
-  .score-badge.fail { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,59,59,0.3); }
+/* ── Word manager ── */
+.word-manager {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 16px;
+  margin-bottom: 0;
+}
+.word-tags {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  min-height: 32px;
+  margin-bottom: 12px;
+}
+.word-tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  padding: 4px 8px 4px 10px;
+  background: var(--accent-dim);
+  border: 1px solid rgba(200,75,47,0.25);
+  border-radius: 2px;
+  color: var(--accent);
+  cursor: default;
+}
+.word-tag.default-tag { opacity: 0.7; }
+.word-tag-remove {
+  background: none; border: none;
+  color: var(--accent); cursor: pointer;
+  font-size: 13px; line-height: 1;
+  padding: 0; opacity: 0.6;
+  transition: opacity 0.15s;
+}
+.word-tag-remove:hover { opacity: 1; }
+.word-add-row {
+  display: flex; gap: 8px;
+}
+#new-word-input {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 8px 12px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.15s;
+}
+#new-word-input:focus { border-color: var(--accent); }
+.word-add-btn {
+  background: var(--ink);
+  color: var(--bg);
+  border: none;
+  border-radius: 3px;
+  padding: 8px 14px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.word-add-btn:hover { background: var(--accent); }
+.word-manager-hint {
+  margin-top: 10px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--ink3);
+  letter-spacing: 0.03em;
+}
 
-  /* Word breakdown */
-  .section-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 13px; font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 14px;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .section-title::after {
-    content: ''; flex: 1; height: 1px; background: var(--border);
-  }
-
-  .word-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 10px;
-    margin-bottom: 24px;
-  }
-  .word-item {
-    border-radius: 10px;
-    padding: 14px 16px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    transition: all 0.15s;
-  }
-  .word-item.found {
-    background: var(--red-dim);
-    border-color: rgba(255,59,59,0.4);
-  }
-  .word-item.found:hover { border-color: var(--red); }
-
-  .word-item-name {
-    font-family: 'DM Mono', monospace;
-    font-size: 13px;
-    color: var(--text);
-    margin-bottom: 6px;
-  }
-  .word-item.found .word-item-name { color: #FF7A7A; }
-
-  .word-item-count {
-    font-family: 'Syne', sans-serif;
-    font-size: 22px; font-weight: 800;
-  }
-  .word-item.found .word-item-count { color: var(--red); }
-  .word-item:not(.found) .word-item-count { color: var(--muted); }
-
-  .word-item-label {
-    font-size: 10px; color: var(--muted);
-    font-family: 'DM Mono', monospace;
-    margin-top: 2px;
-  }
-
-  /* Context quotes */
-  .quotes-box {
-    border-radius: 12px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    overflow: hidden;
-    margin-bottom: 24px;
-  }
-  .quotes-header {
-    padding: 12px 16px;
-    background: var(--surface2);
-    border-bottom: 1px solid var(--border);
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: var(--muted);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-  .quote-item {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-    font-size: 13px;
-    line-height: 1.6;
-    color: #9AA3B8;
-  }
-  .quote-item:last-child { border-bottom: none; }
-  .quote-item mark {
-    background: rgba(255,59,59,0.25);
-    color: #FF7A7A;
-    border-radius: 3px;
-    padding: 1px 3px;
-    font-weight: 600;
-  }
-  .quote-source {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    color: var(--muted);
-    margin-top: 4px;
-  }
-
-  /* D1 verdict */
-  .d1-verdict {
-    border-radius: 12px;
-    padding: 16px 20px;
-    display: flex; align-items: center; gap: 14px;
-    margin-bottom: 24px;
-  }
-  .d1-verdict.pass { background: rgba(0,212,138,0.08); border: 1px solid rgba(0,212,138,0.2); }
-  .d1-verdict.fail { background: var(--red-dim); border: 1px solid rgba(255,59,59,0.3); }
-
-  .d1-icon { font-size: 24px; }
-  .d1-text { font-size: 14px; line-height: 1.5; }
-  .d1-text strong { font-family: 'Syne', sans-serif; display: block; margin-bottom: 2px; }
-
-  /* Error state */
-  .error-box {
-    display: none;
-    margin-top: 20px;
-    padding: 16px 20px;
-    border-radius: 10px;
-    background: var(--red-dim);
-    border: 1px solid rgba(255,59,59,0.3);
-    color: #FF7A7A;
-    font-size: 13px;
-    font-family: 'DM Mono', monospace;
-  }
-
-  /* Divider */
-  hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
-
-  /* Responsive */
-  @media (max-width: 600px) {
-    .score-card { flex-direction: column; text-align: center; }
-    .score-number { font-size: 56px; }
-  }
+hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
 </style>
 </head>
 <body>
-<div class="container">
+<div class="page">
 
-  <!-- Header -->
-  <header>
-    <div class="eyebrow">AI Narrative Benchmark · D1维度工具</div>
-    <h1>Red Word<br><span>Analyzer</span></h1>
-    <p class="subtitle">上传AI回答截图，自动识别并统计红色词出现次数，输出D1维度评分。</p>
-    <div class="word-chips">
-      <span class="chip">dangerous</span>
-      <span class="chip">toxic</span>
-      <span class="chip">unsafe</span>
-      <span class="chip">avoid</span>
-      <span class="chip">risk</span>
-      <span class="chip">harmful</span>
-      <span class="chip">failed</span>
-      <span class="chip">warning</span>
-    </div>
-  </header>
-
-  <!-- API Key input -->
-  <div class="apikey-box" id="apikey-box">
-    <div class="apikey-label">
-      <span>🔑</span>
-      <span>Anthropic API Key</span>
-      <a href="https://console.anthropic.com/settings/keys" target="_blank" class="apikey-link">获取 Key →</a>
-    </div>
-    <div class="apikey-row">
-      <input type="password" id="apikey-input" placeholder="sk-ant-..." spellcheck="false" autocomplete="off">
-      <button class="apikey-save-btn" onclick="saveApiKey()">保存</button>
-    </div>
-    <div class="apikey-hint" id="apikey-hint"></div>
-  </div>
-
-  <!-- Upload -->
-  <div class="upload-zone" id="upload-zone">
-    <input type="file" id="file-input" accept="image/*">
-    <div class="upload-icon">📸</div>
-    <div class="upload-label">拖拽截图到这里</div>
-    <div class="upload-sub">或者 <span onclick="document.getElementById('file-input').click()">点击选择文件</span> · PNG / JPG / WebP</div>
-  </div>
-
-  <div class="preview-box" id="preview-box">
-    <img id="preview-img" src="" alt="preview">
-    <div class="preview-label">
-      <span id="preview-filename">screenshot.png</span>
-      <button class="remove-btn" onclick="removeImage()">✕ 移除</button>
+  <!-- Masthead -->
+  <div class="masthead">
+    <div class="issue-line">AI Narrative Benchmark · D1 维度工具 · 免费本地运行</div>
+    <h1>Red Word<br><em>Analyzer</em></h1>
+    <p class="deck">粘贴 AI 回答文字，自动统计红色词出现次数，输出 D1 维度判定结果。无需网络，无需 API，完全本地运行。</p>
+    <div class="word-row">
+      <span class="wtag">dangerous</span>
+      <span class="wtag">toxic</span>
+      <span class="wtag">unsafe</span>
+      <span class="wtag">avoid</span>
+      <span class="wtag">risk</span>
+      <span class="wtag">harmful</span>
+      <span class="wtag">failed</span>
+      <span class="wtag">warning</span>
     </div>
   </div>
 
-  <div class="error-box" id="error-box"></div>
+  <!-- Word Manager -->
+  <div class="section-label" style="margin-top:32px">监测词库 <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--ink3);margin-left:6px;letter-spacing:0.05em">自动保存到本地</span></div>
+  <div class="word-manager">
+    <div class="word-tags" id="word-tags"></div>
+    <div class="word-add-row">
+      <input type="text" id="new-word-input" placeholder="输入新词，按 Enter 添加..." spellcheck="false">
+      <button class="word-add-btn" onclick="addWordFromInput()">+ 添加</button>
+    </div>
+    <div class="word-manager-hint">点击词上的 × 可删除 · 输入词根即可（risk 会匹配 risks / risky）</div>
+  </div>
 
-  <button class="analyze-btn" id="analyze-btn" disabled onclick="analyze()">
-    <span>🔍</span> 开始分析
+  <!-- Input -->
+  <div class="section-label" style="margin-top:32px">粘贴 AI 回答</div>
+  <textarea
+    class="paste-area"
+    id="input-text"
+    placeholder="将 AI 回答的完整文字粘贴到这里..."
+    oninput="updateCount()"
+  ></textarea>
+  <div class="char-count" id="char-count">0 字符</div>
+
+  <button class="analyze-btn" id="analyze-btn" onclick="analyze()">
+    分析红色词
   </button>
-
-  <!-- Loading -->
-  <div class="loading-state" id="loading-state">
-    <div class="spinner"></div>
-    <div class="loading-text">正在识别图片文字并统计红色词…</div>
-  </div>
 
   <!-- Results -->
   <div class="results" id="results">
 
-    <div class="section-title">D1 维度判定</div>
-    <div id="d1-verdict-box"></div>
+    <div class="section-label">D1 维度判定</div>
+    <div id="verdict-box"></div>
 
-    <div class="section-title">红色词统计</div>
-    <div class="word-grid" id="word-grid"></div>
-
-    <div class="section-title">上下文摘录</div>
-    <div class="quotes-box" id="quotes-box">
-      <div class="quotes-header">找到红色词的句子</div>
-      <div id="quotes-list"></div>
+    <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:28px; padding-bottom:20px; border-bottom:1px solid var(--border)">
+      <div class="score-num" id="score-num">0</div>
+      <div class="score-meta">
+        <strong id="score-label"></strong>
+        <span id="score-sublabel"></span>
+      </div>
     </div>
 
-    <div class="section-title">总分卡</div>
-    <div class="score-card" id="score-card"></div>
+    <div class="section-label">逐词统计</div>
+    <div class="word-grid" id="word-grid"></div>
+
+    <div class="section-label" id="context-label" style="display:none">出现位置</div>
+    <div class="contexts" id="contexts"></div>
+
+    <div class="section-label">全文高亮</div>
+    <div class="highlight-box">
+      <div class="highlight-header">红色词已标红 · 其余文字正常显示</div>
+      <div class="highlight-body" id="highlight-body"></div>
+    </div>
+
+    <button class="reset-btn" onclick="reset()">← 重新分析</button>
 
   </div>
 
 </div>
 
 <script>
-const RED_WORDS = ['dangerous','toxic','unsafe','avoid','risk','harmful','failed','warning'];
-let imageBase64 = null;
-let imageType = null;
+// ── Word list (stored in localStorage) ────────────────────
+const DEFAULT_WORDS = ['dangerous','toxic','unsafe','avoid','risk','harmful','failed','warning'];
 
-// ── API Key management ─────────────────────────────────────
-function getApiKey() {
-  return localStorage.getItem('anthropic_api_key') || '';
-}
-
-function saveApiKey() {
-  const input = document.getElementById('apikey-input');
-  const key = input.value.trim();
-  const hint = document.getElementById('apikey-hint');
-  const box = document.getElementById('apikey-box');
-
-  if (!key.startsWith('sk-ant-')) {
-    hint.textContent = '⚠ Key 格式不对，应以 sk-ant- 开头';
-    hint.className = 'apikey-hint err';
-    return;
-  }
-  localStorage.setItem('anthropic_api_key', key);
-  input.className = 'valid';
-  box.classList.add('saved');
-  hint.textContent = '✓ 已保存到本地，下次打开自动填入';
-  hint.className = 'apikey-hint ok';
-  // Mask display
-  input.value = key.slice(0, 14) + '•'.repeat(20) + key.slice(-4);
-}
-
-function loadSavedKey() {
-  const key = getApiKey();
-  if (!key) return;
-  const input = document.getElementById('apikey-input');
-  const hint = document.getElementById('apikey-hint');
-  const box = document.getElementById('apikey-box');
-  input.value = key.slice(0, 14) + '•'.repeat(20) + key.slice(-4);
-  input.className = 'valid';
-  box.classList.add('saved');
-  hint.textContent = '✓ 已读取本地保存的 Key';
-  hint.className = 'apikey-hint ok';
-}
-
-// Load on startup
-document.addEventListener('DOMContentLoaded', loadSavedKey);
-
-// Allow re-edit on click
-document.addEventListener('DOMContentLoaded', () => {
-  const input = document.getElementById('apikey-input');
-  input.addEventListener('focus', () => {
-    const key = getApiKey();
-    if (key) input.value = key;
-  });
-  input.addEventListener('blur', () => {
-    const key = getApiKey();
-    if (key && input.value === key) {
-      input.value = key.slice(0, 14) + '•'.repeat(20) + key.slice(-4);
-    }
-  });
-});
-
-// ── Drag & drop ────────────────────────────────────────────
-const zone = document.getElementById('upload-zone');
-zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
-zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
-zone.addEventListener('drop', e => {
-  e.preventDefault(); zone.classList.remove('drag-over');
-  const file = e.dataTransfer.files[0];
-  if (file && file.type.startsWith('image/')) loadFile(file);
-});
-zone.addEventListener('click', () => document.getElementById('file-input').click());
-
-document.getElementById('file-input').addEventListener('change', e => {
-  const file = e.target.files[0];
-  if (file) loadFile(file);
-});
-
-function loadFile(file) {
-  const reader = new FileReader();
-  reader.onload = ev => {
-    const dataUrl = ev.target.result;
-    imageBase64 = dataUrl.split(',')[1];
-    imageType = file.type;
-
-    document.getElementById('preview-img').src = dataUrl;
-    document.getElementById('preview-filename').textContent = file.name;
-    document.getElementById('preview-box').style.display = 'block';
-    document.getElementById('analyze-btn').disabled = false;
-    hideResults();
-    hideError();
-  };
-  reader.readAsDataURL(file);
-}
-
-function removeImage() {
-  imageBase64 = null; imageType = null;
-  document.getElementById('preview-box').style.display = 'none';
-  document.getElementById('analyze-btn').disabled = true;
-  document.getElementById('file-input').value = '';
-  hideResults(); hideError();
-}
-
-function hideResults() { document.getElementById('results').style.display = 'none'; }
-function hideError()   { document.getElementById('error-box').style.display = 'none'; }
-
-function showError(msg) {
-  const box = document.getElementById('error-box');
-  box.textContent = '⚠ ' + msg;
-  box.style.display = 'block';
-}
-
-// ── Main analyze ───────────────────────────────────────────
-async function analyze() {
-  if (!imageBase64) return;
-
-  const apiKey = getApiKey();
-  if (!apiKey) {
-    showError('请先填写并保存 Anthropic API Key');
-    document.getElementById('apikey-input').focus();
-    return;
-  }
-
-  hideResults(); hideError();
-  document.getElementById('loading-state').style.display = 'block';
-  document.getElementById('analyze-btn').disabled = true;
-
-  const prompt = `You are analyzing an AI chatbot's response screenshot for a PR benchmark.
-
-Your task:
-1. Extract ALL visible text from this screenshot (it's a screenshot of an AI assistant's reply)
-2. Count exact occurrences of each of these red words (case-insensitive, count each word form: risk/risks/risky all count as "risk"; avoid/avoiding/avoidance count as "avoid"; etc.):
-   - dangerous (includes: dangerous, danger, dangers)
-   - toxic (includes: toxic, toxicity, toxin, toxins)
-   - unsafe (includes: unsafe)
-   - avoid (includes: avoid, avoiding, avoidance, avoidable)
-   - risk (includes: risk, risks, risky, at-risk)
-   - harmful (includes: harmful, harm, harms)
-   - failed (includes: failed, fail, fails, failure, failures)
-   - warning (includes: warning, warnings, warn, warns)
-
-3. For each red word found (count > 0), extract the EXACT sentence or bullet point containing it (max 120 chars, use "..." to truncate).
-
-Return ONLY valid JSON, no markdown, no explanation:
-{
-  "extracted_text_preview": "first 200 chars of extracted text",
-  "counts": {
-    "dangerous": 0,
-    "toxic": 0,
-    "unsafe": 0,
-    "avoid": 0,
-    "risk": 0,
-    "harmful": 0,
-    "failed": 0,
-    "warning": 0
-  },
-  "total": 0,
-  "contexts": [
-    {"word": "risk", "sentence": "...sentence containing the word..."}
-  ]
-}`;
-
+function loadWords() {
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": getApiKey(),
-        "anthropic-version": "2023-06-01",
-        "anthropic-dangerous-direct-browser-access": "true"
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1000,
-        messages: [{
-          role: "user",
-          content: [
-            {
-              type: "image",
-              source: { type: "base64", media_type: imageType, data: imageBase64 }
-            },
-            { type: "text", text: prompt }
-          ]
-        }]
-      })
-    });
-
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error?.message || `API error ${response.status}`);
-    }
-
-    const data = await response.json();
-    const raw = data.content.find(b => b.type === 'text')?.text || '';
-
-    // Strip markdown fences if any
-    const clean = raw.replace(/```json|```/g, '').trim();
-    const result = JSON.parse(clean);
-
-    document.getElementById('loading-state').style.display = 'none';
-    renderResults(result);
-
-  } catch (err) {
-    document.getElementById('loading-state').style.display = 'none';
-    document.getElementById('analyze-btn').disabled = false;
-    showError(err.message || '分析失败，请重试');
-  }
+    const saved = localStorage.getItem('rwa_words');
+    return saved ? JSON.parse(saved) : [...DEFAULT_WORDS];
+  } catch { return [...DEFAULT_WORDS]; }
 }
 
-// ── Render results ─────────────────────────────────────────
-function renderResults(data) {
-  const total = data.total || Object.values(data.counts).reduce((a,b) => a+b, 0);
-  const pass = total <= 2;
-  const level = total === 0 ? 'pass' : total <= 2 ? 'pass' : total <= 4 ? 'warn' : 'fail';
+function saveWords(words) {
+  localStorage.setItem('rwa_words', JSON.stringify(words));
+}
 
-  // D1 verdict
-  const verdictBox = document.getElementById('d1-verdict-box');
+function buildRegex(word) {
+  // Match the word and common suffixes
+  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp('\\b' + escaped + '\\w*\\b', 'gi');
+}
+
+function renderTags() {
+  const words = loadWords();
+  const container = document.getElementById('word-tags');
+  container.innerHTML = words.map((w, i) => `
+    <span class="word-tag ${DEFAULT_WORDS.includes(w) ? 'default-tag' : ''}">
+      ${w}
+      <button class="word-tag-remove" onclick="removeWord(${i})" title="删除">×</button>
+    </span>
+  `).join('');
+}
+
+function removeWord(index) {
+  const words = loadWords();
+  words.splice(index, 1);
+  saveWords(words);
+  renderTags();
+}
+
+function addWordFromInput() {
+  const input = document.getElementById('new-word-input');
+  const val = input.value.trim().toLowerCase().replace(/\s+/g, '');
+  if (!val) return;
+  const words = loadWords();
+  if (words.includes(val)) { input.value = ''; return; }
+  words.push(val);
+  saveWords(words);
+  renderTags();
+  input.value = '';
+  input.focus();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderTags();
+  document.getElementById('new-word-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addWordFromInput();
+  });
+});
+
+// ── Original RED_WORDS kept for structure, now dynamic ──
+const RED_WORDS = {
+  dangerous: /\bdangerous\w*|dangers?\b/gi,
+  toxic:     /\btoxic\w*|toxin\w*\b/gi,
+  unsafe:    /\bunsafe\b/gi,
+  avoid:     /\bavoid\w*\b/gi,
+  risk:      /\brisks?\b|\brisky\b|\bat-risk\b/gi,
+  harmful:   /\bharmful\b|\bharms?\b/gi,
+  failed:    /\bfailed?\b|\bfails?\b|\bfailures?\b/gi,
+  warning:   /\bwarnings?\b|\bwarns?\b/gi,
+};
+
+function updateCount() {
+  const len = document.getElementById('input-text').value.length;
+  document.getElementById('char-count').textContent = len.toLocaleString() + ' 字符';
+  document.getElementById('analyze-btn').disabled = len < 10;
+}
+
+function analyze() {
+  const text = document.getElementById('input-text').value.trim();
+  if (!text) return;
+
+  // Count each word dynamically
+  const words = loadWords();
+  const counts = {};
+  let total = 0;
+  for (const word of words) {
+    const regex = buildRegex(word);
+    const matches = text.match(regex) || [];
+    counts[word] = matches.length;
+    total += matches.length;
+  }
+
+  // Determine level
+  const level = total === 0 ? 'zero' : total <= 2 ? 'low' : total <= 4 ? 'mid' : 'high';
+  const pass = total <= 2;
+
+  // ── Verdict ──
+  const verdictBox = document.getElementById('verdict-box');
   verdictBox.innerHTML = `
-    <div class="d1-verdict ${pass ? 'pass' : 'fail'}">
-      <div class="d1-icon">${pass ? '✅' : '❌'}</div>
-      <div class="d1-text">
-        <strong>D1 定性强度：${pass ? '通过' : '触发风险'}</strong>
-        红色词共出现 <strong>${total}</strong> 次。判断标准：≤2次为通过，>2次为触发风险。
+    <div class="verdict-banner ${pass ? 'pass' : 'fail'}" style="margin-bottom:28px">
+      <div class="verdict-icon">${pass ? '✅' : '❌'}</div>
+      <div class="verdict-body">
+        <div class="verdict-title">D1 定性强度：${pass ? '通过' : '触发风险'}</div>
+        <div class="verdict-desc">
+          红色词共出现 <strong>${total}</strong> 次。
+          判断标准：≤ 2次 → 通过，> 2次 → 触发风险。
+          ${total === 0 ? '回答完全未使用定性负面词汇。' :
+            pass ? '红色词使用在合理范围内，未过度定性。' :
+            total <= 4 ? '红色词偏多，回答倾向强化负面印象，建议复核。' :
+            '红色词过多，AI对平台做出了强定性负面判断。'}
+        </div>
       </div>
     </div>
   `;
 
-  // Word grid
-  const grid = document.getElementById('word-grid');
-  grid.innerHTML = RED_WORDS.map(word => {
-    const count = data.counts[word] || 0;
-    const found = count > 0;
-    return `
-      <div class="word-item ${found ? 'found' : ''}">
-        <div class="word-item-name">${word}</div>
-        <div class="word-item-count">${count}</div>
-        <div class="word-item-label">${found ? '次出现' : '未出现'}</div>
-      </div>
-    `;
-  }).join('');
+  // ── Score ──
+  const scoreEl = document.getElementById('score-num');
+  scoreEl.textContent = total;
+  scoreEl.className = 'score-num ' + level;
+  document.getElementById('score-label').textContent =
+    total === 0 ? '零触发' : total <= 2 ? '低触发' : total <= 4 ? '中度触发' : '高度触发';
+  document.getElementById('score-sublabel').textContent = '次红色词出现';
 
-  // Contexts
-  const quotesList = document.getElementById('quotes-list');
-  const contexts = data.contexts || [];
-  if (contexts.length === 0) {
-    quotesList.innerHTML = `<div class="quote-item" style="color:var(--muted)">未找到红色词</div>`;
-  } else {
-    quotesList.innerHTML = contexts.map(ctx => {
-      const highlighted = ctx.sentence.replace(
-        new RegExp(`\\b(${RED_WORDS.join('|')}\\w*)\\b`, 'gi'),
-        m => `<mark>${m}</mark>`
-      );
+  // ── Word grid ──
+  const grid = document.getElementById('word-grid');
+  grid.innerHTML = Object.entries(counts).map(([word, count]) => `
+    <div class="word-card ${count > 0 ? 'hit' : ''}">
+      <div class="word-card-name">${word}</div>
+      <div class="word-card-count">${count}</div>
+      <div class="word-card-sub">${count > 0 ? '次' : '未出现'}</div>
+    </div>
+  `).join('');
+
+  // ── Contexts (sentences containing red words) ──
+  const contextsEl = document.getElementById('contexts');
+  const contextLabel = document.getElementById('context-label');
+  const sentences = text.split(/(?<=[.!?。！？\n])\s*/);
+  const found = [];
+
+  for (const sentence of sentences) {
+    const s = sentence.trim();
+    if (!s) continue;
+    for (const word of words) {
+      const regex = buildRegex(word);
+      if (regex.test(s)) {
+        found.push({ word, sentence: s });
+        break;
+      }
+    }
+  }
+
+  if (found.length > 0) {
+    contextLabel.style.display = '';
+    contextsEl.innerHTML = found.map(({ word, sentence }) => {
+      const ctxPattern = words.map(w => {
+        const esc = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        return '\\b' + esc + '\\w*\\b';
+      }).join('|');
+      const highlighted = sentence.replace(new RegExp(ctxPattern, 'gi'), m => `<mark>${m}</mark>`);
       return `
-        <div class="quote-item">
-          ${highlighted}
-          <div class="quote-source">↑ 含「${ctx.word}」</div>
+        <div class="context-item">
+          <span class="context-tag">${word}</span>
+          <span class="context-sentence">${highlighted}</span>
         </div>
       `;
     }).join('');
+  } else {
+    contextLabel.style.display = 'none';
+    contextsEl.innerHTML = '';
   }
 
-  // Score card
-  const scoreCard = document.getElementById('score-card');
-  const verdictText = level === 'pass' ? '定性强度正常' : level === 'warn' ? '定性偏强，需关注' : '定性过强，触发风险';
-  const verdictDesc = level === 'pass'
-    ? '红色词使用在合理范围内，AI回答未过度定性平台的安全问题。'
-    : level === 'warn'
-    ? '红色词出现次数偏多，回答倾向于强化负面印象，建议复核。'
-    : '红色词出现次数过多，AI回答做出了强定性负面判断，D1维度标记为❌触发风险。';
+  // ── Full text highlight ──
+  let highlighted = escapeHtml(text);
+  // Build combined regex from current word list
+  const combinedPattern = words.map(w => {
+    const escaped = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return '\\b' + escaped + '\\w*\\b';
+  }).join('|');
+  const combined = new RegExp(combinedPattern, 'gi');
+  highlighted = highlighted.replace(combined, m => `<mark>${m}</mark>`);
+  document.getElementById('highlight-body').innerHTML = highlighted;
 
-  scoreCard.innerHTML = `
-    <div class="score-number ${level}">${total}</div>
-    <div class="score-meta">
-      <div class="score-verdict ${level}">${verdictText}</div>
-      <div class="score-desc">${verdictDesc}</div>
-    </div>
-    <div class="score-badge ${level}">${level === 'pass' ? '✅ D1 通过' : '❌ D1 触发'}</div>
-  `;
-
+  // Show results
   document.getElementById('results').style.display = 'block';
-  document.getElementById('analyze-btn').disabled = false;
   document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
+
+function escapeHtml(text) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function reset() {
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('input-text').value = '';
+  document.getElementById('char-count').textContent = '0 字符';
+  document.getElementById('analyze-btn').disabled = true;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Init
+document.getElementById('analyze-btn').disabled = true;
 </script>
 </body>
 </html>
