@@ -953,14 +953,22 @@ textarea.notes-area::placeholder { color: var(--ink3); }
     <!-- Export / Import -->
     <div style="margin-top:32px;border-top:1px solid var(--border);padding-top:24px;">
       <div class="section-label" style="margin-bottom:16px;">Export & Import</div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start;">
         <div>
-          <button class="export-btn" onclick="exportCSV()">↓ Export CSV</button>
+          <button class="export-btn" onclick="exportCSV('all')">↓ Export All CSV</button>
           <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--ink3);margin-top:5px;">Flat table for Excel &amp; pivot</div>
         </div>
         <div>
-          <button class="export-btn" onclick="exportJSON()">↓ Export JSON</button>
+          <button class="export-btn" onclick="exportCSV('selected')">↓ Export Selected CSV</button>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--ink3);margin-top:5px;">Selected entries only</div>
+        </div>
+        <div>
+          <button class="export-btn" onclick="exportJSON('all')">↓ Export All JSON</button>
           <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--ink3);margin-top:5px;">Full backup — reimport later</div>
+        </div>
+        <div>
+          <button class="export-btn" onclick="exportJSON('selected')">↓ Export Selected JSON</button>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--ink3);margin-top:5px;">Backup selected only</div>
         </div>
         <div>
           <label for="import-file" class="export-btn" style="cursor:pointer;">↑ Import JSON</label>
@@ -968,7 +976,11 @@ textarea.notes-area::placeholder { color: var(--ink3); }
           <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--ink3);margin-top:5px;">Restore from backup file</div>
         </div>
         <div>
-          <button class="export-btn" style="border-color:var(--accent);color:var(--accent);" onclick="clearAllEntries()">✕ Clear All</button>
+          <button class="export-btn" onclick="clearEntries('selected')" style="border-color:var(--yellow);color:var(--yellow);">✕ Clear Selected</button>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--ink3);margin-top:5px;">Remove checked entries</div>
+        </div>
+        <div>
+          <button class="export-btn" onclick="clearEntries('all')" style="border-color:var(--accent);color:var(--accent);">✕ Clear All</button>
           <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--ink3);margin-top:5px;">Export JSON first!</div>
         </div>
       </div>
@@ -1120,7 +1132,9 @@ Return a JSON object with this exact structure:
       ]
     }
   ]
-}`;
+}
+
+IMPORTANT: Extract ALL sources listed in the response, not just a few. Do not truncate the sources list.`;
 
   const apiKey = document.getElementById('api-key').value.trim();
   if (!apiKey) { alert('Please enter your DeepSeek API key at the top of the page.'); document.getElementById('loading').style.display='none'; document.getElementById('analyze-btn').disabled=false; return; }
@@ -1131,7 +1145,7 @@ Return a JSON object with this exact structure:
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
       body: JSON.stringify({
         model: 'deepseek-chat',
-        max_tokens: 4000,
+        max_tokens: 8000,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
@@ -1268,12 +1282,27 @@ function pickSentiment(s) {
 // ══════════════════════════════════════════════════════
 async function saveEntry() {
   if (!currentResult) return;
+  const wave     = parseInt(document.getElementById('meta-wave').value) || 1;
+  const platform = document.getElementById('meta-platform').value;
+  const prompt   = currentResult.prompt;
+
+  // Duplicate detection: Wave + Platform + Prompt
+  const isDuplicate = entries.some(e =>
+    e.wave === wave &&
+    e.platform === platform &&
+    e.prompt.trim().toLowerCase() === prompt.trim().toLowerCase()
+  );
+  if (isDuplicate) {
+    const ok = confirm(`A entry for Wave ${wave} / ${platform} / "${prompt}" already exists.\n\nSave anyway as a new entry?`);
+    if (!ok) return;
+  }
+
   const entry = {
     id: Date.now(),
-    wave: parseInt(document.getElementById('meta-wave').value) || 1,
+    wave,
     date: document.getElementById('meta-date').value,
-    platform: document.getElementById('meta-platform').value,
-    prompt: currentResult.prompt,
+    platform,
+    prompt,
     answers: currentResult.answers,
     sources: currentResult.sources,
     aiResult: currentResult.result,
@@ -1358,7 +1387,7 @@ async function runCompare() {
     return `
       <div style="margin-bottom:20px;">
         <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink3);margin-bottom:8px;">${e.platform}</div>
-        <ul class="source-list">${unique.slice(0,8).map((s,si) => `
+        <ul class="source-list">${unique.map((s,si) => `
           <li>
             <span class="source-num">${si+1}</span>
             <div>
@@ -1447,7 +1476,7 @@ async function runTrack() {
   const timeline = document.getElementById('trk-timeline');
   timeline.innerHTML = filtered.map(e => {
     const s = e.aiResult.overall_sentiment;
-    const srcs = (e.aiResult.runs||[]).flatMap(r => r.sources_extracted||[]).slice(0,4);
+    const srcs = (e.aiResult.runs||[]).flatMap(r => r.sources_extracted||[]);
     return `
       <div class="timeline-item">
         <div class="timeline-wave">Wave ${e.wave} · ${e.date || 'No date'} · ${e.platform}</div>
@@ -1517,8 +1546,17 @@ Write a concise 3-4 sentence drift analysis: (1) has sentiment gotten more or le
 // ══════════════════════════════════════════════════════
 // SAVED LIST
 // ══════════════════════════════════════════════════════
+function getSelectedIds() {
+  return [...document.querySelectorAll('.entry-checkbox:checked')].map(cb => parseInt(cb.dataset.id));
+}
+
+function toggleSelectAll() {
+  const master = document.getElementById('select-all-cb');
+  document.querySelectorAll('.entry-checkbox').forEach(cb => cb.checked = master.checked);
+}
+
 function renderSavedList() {
-  const list = document.getElementById('saved-entries-list');
+  const list  = document.getElementById('saved-entries-list');
   const count = document.getElementById('saved-count');
   count.textContent = `${entries.length} entr${entries.length===1?'y':'ies'} logged`;
 
@@ -1527,24 +1565,34 @@ function renderSavedList() {
     return;
   }
 
-  list.innerHTML = [...entries].reverse().map(e => {
-    const s = e.aiResult.overall_sentiment;
-    return `
-      <div class="entry-card">
-        <div class="entry-wave">W${e.wave} · ${e.date||'—'}</div>
-        <div class="entry-platform">${e.platform}</div>
-        <div class="entry-prompt">${e.prompt}</div>
-        <div class="entry-sentiment ${s.toLowerCase()}">${s}</div>
-      </div>
-    `;
-  }).join('');
+  const sorted = [...entries].reverse();
+  list.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;padding:6px 10px;border:1px solid var(--border);border-radius:3px;background:var(--surface2);margin-bottom:8px;">
+      <input type="checkbox" id="select-all-cb" onchange="toggleSelectAll()" style="cursor:pointer;">
+      <label for="select-all-cb" style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink3);cursor:pointer;">Select All</label>
+    </div>
+    ${sorted.map(e => {
+      const s = e.aiResult.overall_sentiment;
+      return `
+        <div class="entry-card" style="gap:10px;">
+          <input type="checkbox" class="entry-checkbox" data-id="${e.id}" style="cursor:pointer;flex-shrink:0;">
+          <div class="entry-wave">W${e.wave} · ${e.date||'—'}</div>
+          <div class="entry-platform">${e.platform}</div>
+          <div class="entry-prompt">${e.prompt}</div>
+          <div class="entry-sentiment ${s.toLowerCase()}">${s}</div>
+        </div>
+      `;
+    }).join('')}
+  `;
 }
 
 // ══════════════════════════════════════════════════════
 // EXPORT
 // ══════════════════════════════════════════════════════
-function exportCSV() {
-  if (entries.length === 0) { alert('No entries to export.'); return; }
+function exportCSV(mode='all') {
+  const ids  = mode === 'selected' ? getSelectedIds() : null;
+  const data = ids ? entries.filter(e => ids.includes(e.id)) : entries;
+  if (data.length === 0) { alert(mode==='selected' ? 'No entries selected.' : 'No entries to export.'); return; }
 
   const rows = [
     [
@@ -1556,7 +1604,7 @@ function exportCSV() {
     ]
   ];
 
-  for (const e of entries) {
+  for (const e of data) {
     const runs = e.aiResult.runs || [];
     const meta = [
       e.wave, e.date, e.platform, e.prompt,
@@ -1597,18 +1645,39 @@ function exportCSV() {
 // ══════════════════════════════════════════════════════
 // JSON BACKUP / RESTORE
 // ══════════════════════════════════════════════════════
-function exportJSON() {
-  if (entries.length === 0) { alert('No entries to export.'); return; }
-  const blob = new Blob([JSON.stringify(entries, null, 2)], { type: 'application/json' });
+function exportJSON(mode='all') {
+  const ids  = mode === 'selected' ? getSelectedIds() : null;
+  const data = ids ? entries.filter(e => ids.includes(e.id)) : entries;
+  if (data.length === 0) { alert(mode==='selected' ? 'No entries selected.' : 'No entries to export.'); return; }
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href = url;
-  a.download = `temu_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.download = `temu_backup_${mode}_${new Date().toISOString().slice(0,10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
 }
 
-async function importJSON(event) {
+async function clearEntries(mode='selected') {
+  const ids = mode === 'selected' ? getSelectedIds() : null;
+  if (mode === 'selected' && ids.length === 0) { alert('No entries selected.'); return; }
+  const count = mode === 'selected' ? ids.length : entries.length;
+  const ok = confirm(`Clear ${count} entr${count===1?'y':'ies'}? Make sure you've exported a JSON backup first.`);
+  if (!ok) return;
+
+  if (mode === 'all') {
+    await dbClear();
+    entries = [];
+  } else {
+    const tx    = db.transaction('entries', 'readwrite');
+    const store = tx.objectStore('entries');
+    ids.forEach(id => store.delete(id));
+    await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
+    entries = await dbGetAll();
+  }
+  renderSavedList();
+  showImportNotice(`✓ ${count} entr${count===1?'y':'ies'} cleared.`);
+}
   const file = event.target.files[0];
   if (!file) return;
   try {
@@ -1633,16 +1702,6 @@ async function importJSON(event) {
     showImportNotice('Import failed — please use a valid JSON backup file.');
   }
   event.target.value = ''; // reset file input
-}
-
-async function clearAllEntries() {
-  if (entries.length === 0) { alert('Nothing to clear.'); return; }
-  const ok = confirm(`Clear all ${entries.length} saved entries? Make sure you've exported a JSON backup first.`);
-  if (!ok) return;
-  await dbClear();
-  entries = [];
-  renderSavedList();
-  showImportNotice('✓ All entries cleared.');
 }
 
 function showImportNotice(msg) {
