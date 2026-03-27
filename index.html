@@ -950,13 +950,29 @@ textarea.notes-area::placeholder { color: var(--ink3); }
 
     <div class="empty-state" id="track-empty">Log entries across multiple waves to track changes here.</div>
 
-    <!-- Export -->
-    <div style="margin-top:32px;border-top:1px solid var(--border);padding-top:24px;display:flex;align-items:center;justify-content:space-between;">
-      <div>
-        <div class="section-label" style="margin-bottom:4px;">Export</div>
-        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--ink3);">Download all logged entries as Excel (.csv)</div>
+    <!-- Export / Import -->
+    <div style="margin-top:32px;border-top:1px solid var(--border);padding-top:24px;">
+      <div class="section-label" style="margin-bottom:16px;">Export & Import</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <div>
+          <button class="export-btn" onclick="exportCSV()">↓ Export CSV</button>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--ink3);margin-top:5px;">Flat table for Excel &amp; pivot</div>
+        </div>
+        <div>
+          <button class="export-btn" onclick="exportJSON()">↓ Export JSON</button>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--ink3);margin-top:5px;">Full backup — reimport later</div>
+        </div>
+        <div>
+          <label for="import-file" class="export-btn" style="cursor:pointer;">↑ Import JSON</label>
+          <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importJSON(event)">
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--ink3);margin-top:5px;">Restore from backup file</div>
+        </div>
+        <div>
+          <button class="export-btn" style="border-color:var(--accent);color:var(--accent);" onclick="clearAllEntries()">✕ Clear All</button>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--ink3);margin-top:5px;">Export JSON first!</div>
+        </div>
       </div>
-      <button class="export-btn" onclick="exportCSV()">↓ Export Log</button>
+      <div class="notice" id="import-notice" style="margin-top:10px;"></div>
     </div>
 
     <div id="saved-log-section" style="margin-top:32px;">
@@ -971,11 +987,67 @@ textarea.notes-area::placeholder { color: var(--ink3); }
 
 <script>
 // ══════════════════════════════════════════════════════
-// STATE
+// STATE & INDEXEDDB
 // ══════════════════════════════════════════════════════
-let entries = JSON.parse(localStorage.getItem('temu_entries') || '[]');
+let entries = [];
 let currentResult = null;
 let myPickedSentiment = '';
+let db = null;
+
+const DB_NAME = 'temu_monitor';
+const DB_VERSION = 1;
+const STORE = 'entries';
+
+function initDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains(STORE)) {
+        d.createObjectStore(STORE, { keyPath: 'id' });
+      }
+    };
+    req.onsuccess = e => { db = e.target.result; resolve(); };
+    req.onerror   = e => reject(e.target.error);
+  });
+}
+
+function dbGetAll() {
+  return new Promise((resolve, reject) => {
+    const tx  = db.transaction(STORE, 'readonly');
+    const req = tx.objectStore(STORE).getAll();
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror   = e => reject(e.target.error);
+  });
+}
+
+function dbPut(entry) {
+  return new Promise((resolve, reject) => {
+    const tx  = db.transaction(STORE, 'readwrite');
+    const req = tx.objectStore(STORE).put(entry);
+    req.onsuccess = () => resolve();
+    req.onerror   = e => reject(e.target.error);
+  });
+}
+
+function dbClear() {
+  return new Promise((resolve, reject) => {
+    const tx  = db.transaction(STORE, 'readwrite');
+    const req = tx.objectStore(STORE).clear();
+    req.onsuccess = () => resolve();
+    req.onerror   = e => reject(e.target.error);
+  });
+}
+
+function dbPutMany(items) {
+  return new Promise((resolve, reject) => {
+    const tx    = db.transaction(STORE, 'readwrite');
+    const store = tx.objectStore(STORE);
+    items.forEach(item => store.put(item));
+    tx.oncomplete = () => resolve();
+    tx.onerror    = e => reject(e.target.error);
+  });
+}
 
 // ══════════════════════════════════════════════════════
 // TABS
@@ -1194,7 +1266,7 @@ function pickSentiment(s) {
 // ══════════════════════════════════════════════════════
 // SAVE
 // ══════════════════════════════════════════════════════
-function saveEntry() {
+async function saveEntry() {
   if (!currentResult) return;
   const entry = {
     id: Date.now(),
@@ -1208,8 +1280,8 @@ function saveEntry() {
     myAssessment: myPickedSentiment,
     myNotes: document.getElementById('my-notes').value,
   };
-  entries.push(entry);
-  localStorage.setItem('temu_entries', JSON.stringify(entries));
+  await dbPut(entry);
+  entries = await dbGetAll();
   document.getElementById('save-notice').classList.add('show');
   renderSavedList();
 }
@@ -1475,23 +1547,41 @@ function exportCSV() {
   if (entries.length === 0) { alert('No entries to export.'); return; }
 
   const rows = [
-    ['Wave','Date','Platform','Prompt','AI Sentiment','Consistency','Key Themes','My Assessment','My Notes','Sources (Run 1)']
+    [
+      'Wave','Date','Platform','Prompt',
+      'Overall AI Sentiment','Consistency','Consistency Note','Key Themes',
+      'My Assessment','My Notes',
+      'Run #','Run AI Sentiment','Run AI Summary','Run Answer',
+      'Source Title','Source URL'
+    ]
   ];
 
   for (const e of entries) {
-    const srcs = (e.aiResult.runs?.[0]?.sources_extracted || []).map(s => s.title || s.url).join(' | ');
-    rows.push([
-      e.wave,
-      e.date,
-      e.platform,
-      e.prompt,
+    const runs = e.aiResult.runs || [];
+    const meta = [
+      e.wave, e.date, e.platform, e.prompt,
       e.aiResult.overall_sentiment,
       e.aiResult.consistency,
+      e.aiResult.consistency_note || '',
       (e.aiResult.key_themes||[]).join(', '),
       e.myAssessment || '',
-      e.myNotes || '',
-      srcs
-    ]);
+      e.myNotes || ''
+    ];
+
+    for (let i = 0; i < runs.length; i++) {
+      const run    = runs[i];
+      const answer = (e.answers || [])[i] || '';
+      const srcs   = run.sources_extracted || [];
+      const runMeta = [i+1, run.sentiment || '', run.summary || '', answer];
+
+      if (srcs.length === 0) {
+        rows.push([...meta, ...runMeta, '', '']);
+      } else {
+        for (const s of srcs) {
+          rows.push([...meta, ...runMeta, s.title || '', s.url || '']);
+        }
+      }
+    }
   }
 
   const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
@@ -1505,9 +1595,69 @@ function exportCSV() {
 }
 
 // ══════════════════════════════════════════════════════
+// JSON BACKUP / RESTORE
+// ══════════════════════════════════════════════════════
+function exportJSON() {
+  if (entries.length === 0) { alert('No entries to export.'); return; }
+  const blob = new Blob([JSON.stringify(entries, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `temu_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function importJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  try {
+    const text    = await file.text();
+    const imported = JSON.parse(text);
+    if (!Array.isArray(imported)) throw new Error('Invalid format');
+
+    // Merge: add only entries whose id doesn't already exist
+    const existingIds = new Set(entries.map(e => e.id));
+    const newEntries  = imported.filter(e => !existingIds.has(e.id));
+
+    if (newEntries.length === 0) {
+      showImportNotice('All entries already exist — nothing new imported.');
+      return;
+    }
+
+    await dbPutMany(newEntries);
+    entries = await dbGetAll();
+    renderSavedList();
+    showImportNotice(`✓ Imported ${newEntries.length} new entr${newEntries.length===1?'y':'ies'} successfully.`);
+  } catch(e) {
+    showImportNotice('Import failed — please use a valid JSON backup file.');
+  }
+  event.target.value = ''; // reset file input
+}
+
+async function clearAllEntries() {
+  if (entries.length === 0) { alert('Nothing to clear.'); return; }
+  const ok = confirm(`Clear all ${entries.length} saved entries? Make sure you've exported a JSON backup first.`);
+  if (!ok) return;
+  await dbClear();
+  entries = [];
+  renderSavedList();
+  showImportNotice('✓ All entries cleared.');
+}
+
+function showImportNotice(msg) {
+  const el = document.getElementById('import-notice');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 4000);
+}
+
+// ══════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  await initDB();
+  entries = await dbGetAll();
   document.getElementById('meta-date').valueAsDate = new Date();
   renderSavedList();
 });
