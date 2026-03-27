@@ -1025,6 +1025,7 @@ function initDB() {
 }
 
 function dbGetAll() {
+  if (!db) return Promise.resolve(entries);
   return new Promise((resolve, reject) => {
     const tx  = db.transaction(STORE, 'readonly');
     const req = tx.objectStore(STORE).getAll();
@@ -1034,6 +1035,7 @@ function dbGetAll() {
 }
 
 function dbPut(entry) {
+  if (!db) { entries.push(entry); return Promise.resolve(); }
   return new Promise((resolve, reject) => {
     const tx  = db.transaction(STORE, 'readwrite');
     const req = tx.objectStore(STORE).put(entry);
@@ -1043,6 +1045,7 @@ function dbPut(entry) {
 }
 
 function dbClear() {
+  if (!db) { entries = []; return Promise.resolve(); }
   return new Promise((resolve, reject) => {
     const tx  = db.transaction(STORE, 'readwrite');
     const req = tx.objectStore(STORE).clear();
@@ -1052,6 +1055,7 @@ function dbClear() {
 }
 
 function dbPutMany(items) {
+  if (!db) { items.forEach(item => { if (!entries.find(e => e.id===item.id)) entries.push(item); }); return Promise.resolve(); }
   return new Promise((resolve, reject) => {
     const tx    = db.transaction(STORE, 'readwrite');
     const store = tx.objectStore(STORE);
@@ -1678,6 +1682,8 @@ async function clearEntries(mode='selected') {
   renderSavedList();
   showImportNotice(`✓ ${count} entr${count===1?'y':'ies'} cleared.`);
 }
+
+async function importJSON(event) {
   const file = event.target.files[0];
   if (!file) return;
   try {
@@ -1715,8 +1721,14 @@ function showImportNotice(msg) {
 // INIT
 // ══════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', async () => {
-  await initDB();
-  entries = await dbGetAll();
+  try {
+    await initDB();
+    entries = await dbGetAll();
+  } catch(err) {
+    console.warn('IndexedDB unavailable, falling back to in-memory storage:', err);
+    db = null;
+    entries = [];
+  }
   document.getElementById('meta-date').valueAsDate = new Date();
   renderSavedList();
 });
